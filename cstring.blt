@@ -1,0 +1,7 @@
+extern "C" {
+
+strlen(const char* str);
+
+memcpy(const void* dest, const void* src, unsigned int size);
+
+}
