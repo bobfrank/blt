@@ -1,0 +1,50 @@
+class string
+{
+    init(const string& str);
+    init;
+    init(const char* str);
+    del;
+    c_str => (const char* str);
+    size => (int size);
+    const char* data;
+}
+
+string::private_init(const char* data, int size)
+{
+    self.data = new data[size+1];
+    .cstring.memcpy( src  = data,
+                     dest = self.data,
+                     size = size );
+}
+
+string::init(const string& str)
+{
+    self.private_init( str  = str.c_str(),
+                       size = str.size() )
+}
+
+string::init(const char* str)
+{
+    self.private_init( str  = str,
+                       size = .cstring.strlen(str=str) )
+}
+
+string::init
+{
+    self.data = 0;
+}
+
+string::del
+{
+    delete self.data;
+}
+
+string::c_str => (const char* str)
+{
+    return(str = self.data);
+}
+
+string::size => (int size)
+{
+    return(size = .cstring.strlen(str=self.data) );
+}
