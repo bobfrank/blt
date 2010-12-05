@@ -6,9 +6,12 @@ class string
     del;
     c_str => (const char* str);
     size => (int size);
-    const char* data;
 }
 
+// private data member
+const char* string::data;
+
+// anything not in the class definition becomes private
 string::private_init(const char* data, int size)
 {
     self.data = new data[size+1];
@@ -20,13 +23,13 @@ string::private_init(const char* data, int size)
 string::init(const string& str)
 {
     self.private_init( str  = str.c_str(),
-                       size = str.size() )
+                       size = str.size() );
 }
 
 string::init(const char* str)
 {
     self.private_init( str  = str,
-                       size = .cstring.strlen(str=str) )
+                       size = .cstring.strlen(str=str) );
 }
 
 string::init
