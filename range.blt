@@ -1,0 +1,48 @@
+// makes the class templatized... nowhere else can you change T to something else...
+//   i.e. no template<> on an individual member function
+template<typename T>
+class range
+{
+    init(T& begin, T& end);
+    empty => (bool empty);
+    pop_front;
+    front => (void*);
+}
+// const ranges and forward/backward only will have to be thought about too...
+//      with minimal code
+
+myconst T* range::end;
+myconst T* range::begin;
+
+range::init(T& begin, T& end)
+    : end(&end)
+    , begin(&begin)
+{
+}
+
+range::empty
+{
+    return( empty = (self.begin >= self.end) );
+}
+
+range::pop_front
+{
+    assert( !self.empty() );
+    self.begin++;
+}
+
+range::front => (T& item)
+{
+    return(item = *self.begin);
+}
+
+range::pop_back
+{
+    assert( !self.empty() );
+    self.end--;
+}
+
+range::back => (T& item)
+{
+    return(item = *self.end);
+}
