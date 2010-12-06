@@ -6,7 +6,9 @@ class range
     init(T& begin, T& end);
     empty => (bool empty);
     pop_front;
-    front => (void*);
+    front => (T& item);
+    pop_back;
+    back => (T& item);
 }
 // const ranges and forward/backward only will have to be thought about too...
 //      with minimal code
@@ -46,3 +48,60 @@ range::back => (T& item)
 {
     return(item = *self.end);
 }
+
+
+// and to create a reserve range
+template<typename T>
+class reverse
+{
+    init(range<T>& original);
+    empty => (bool empty);
+    pop_front;
+    front => (T& item);
+    pop_back;
+    back => (T& item);
+}
+
+range<T>& reverse::original;
+
+reverse::init(range<T>& original)
+    : original( original )
+{
+}
+
+reverse::empty => (bool empty)
+{
+    return(empty=self.original.empty());
+}
+
+reverse::pop_front
+{
+    self.original.pop_back();
+}
+
+reverse::front => (T& item)
+{
+    return(item = self.original.back());
+}
+
+reverse::pop_back
+{
+    self.original.pop_front();
+}
+
+reverse::back => (T& item)
+{
+    return(item=self.original.front());
+}
+
+
+
+class xrange : range // should be a forward-only range...
+{
+    init(bigint max=bigint::infinity);
+    pop_back = no; // breaks the contract of being a range type... need to figure out how to make this pretty
+    back = no;
+    
+}
+
+xrange

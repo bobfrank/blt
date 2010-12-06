@@ -50,10 +50,11 @@ string::c_str => (const char* str)
 
 string::size => (int size)
 {
-    return(size = .cstring.strlen(str=self.data) );
+    using cstring; // must be scoped... no global using namespace or include like stuff
+    return(size = strlen(str=self.data) );
 }
 
-//creates a function 'fun' which is similar to a static function in c
+//creates a function 'fun' which is hidden in the same sense as a static function in c
 ::fun
 {
 }
