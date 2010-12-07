@@ -1,8 +1,8 @@
 strlen = extern "C" (const char* str)
-                 => (int count);
+                 => (int count) {{strlen}};
 
 memcpy = extern "C" (const void* dest, const void* src, unsigned int size)
-                 => (int count);
+                 => (int count) {{memcpy}};
 
 class parray
 {
@@ -30,7 +30,7 @@ parray::del
 
 // second form of extern syntax if you want to add some variables...
 parray::append(int item)
-        = extern "Python" (~PARRAY array=self.data, int item=item) { array.append(item) }
+        = extern "Python" (~PARRAY array=self.data, int item=item) {{ array.append(item) }}
 
 // no using self if called from init... maybe
-parray::setup = extern "Python" => (~PARRAY) { [] }
+parray::setup = extern "Python" => (~PARRAY) {{ [] }}

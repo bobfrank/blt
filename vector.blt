@@ -1,14 +1,14 @@
-template<typename T>
+template(typename T)
 class vector
 {
     using range;
     init;
-    init(range<T>& init_list); // something like c++0x initializer list..
+    init(range(T=T)& init_list); // something like c++0x initializer list..
     push_back(const T& item);
     size => (int size);
     reserve(int size);
     resize(int size, const T& t=T() );
-    get_range => (range<T>& iterator);
+    get_range => (range(T=T)& iterator);
     operator[] (int offset) => (T& item);
 }
 
@@ -24,23 +24,23 @@ vector::init
 }
 
 // perhaps some lisp style lists
-vector::init(range& init_list)
+vector::init(range(T=T)& init_list)
     : data(0)
     , size(0)
     , reserved(0)
 {
     while( !init_list.empty() ) { // need to figure out the best way.. this is slow
-        self.push_back(item=init_list.front());
+        self.push_back( item = init_list.front() );
         init_list.pop_front();
     }
 }
 
 vector::push_back
 
-vector::get_range => (range<T> iterator)
+vector::get_range => (range(T=T) iterator)
 {
-    range<T> iterator(begin = &self.data[0],
-                      end   = &self.data[self.size-1]);
+    range(T=T) iterator(begin = &self.data[0],
+                        end   = &self.data[self.size-1]);
     return(iterator=iterator);
 } => {
     //clean up if not done by raii...
