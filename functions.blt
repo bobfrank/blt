@@ -1,9 +1,11 @@
 //comment
 strlen = extern "C" (const char* str)
-                 => (int count) {{strlen}};
+                 => (int count)
+                 {{strlen}};
 
 parray::append(int item)
-        = extern "Python" ($PARRAY array=self.data, int item=item) {{ array.append(item) }};
+        = extern "Python" ($PARRAY array=self.data, int item=item)
+        {{ array.append(item) }};
 
 
 argfun (int arg=4)
@@ -20,4 +22,17 @@ retfun => (int pass)
 
 fullfun (int x) => (int y=2, bigint z)
 {
+}
+// range is something like c++0x initializer list.. maybe
+template(typename T)
+class vector
+{
+    init;
+    init(range.range(T=T)& init_list);
+    push_back(const T& item);
+    size => (int size);
+    reserve(int size);
+    resize(int size, const T& t=T() );
+    get_range => (range(T=T)& iterator);
+    operator[] (int offset) => (T& item);
 }

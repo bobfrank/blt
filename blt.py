@@ -2,14 +2,16 @@ reserved = {
     'extern':   'EXTERN',
     'const':    'CONST',
     'class':    'CLASS',
-    'template': 'TEMPLATE'
+    'template': 'TEMPLATE',
+    'operator': 'OPERATOR'
     }
 tokens = ['COMMENT',
     'NAME','FLOAT', 'POINTS', 'BITAND',
     'PLUS','MINUS','TIMES','DIVIDE','EQUALS',
     'LPAREN','RPAREN', 'INT', 'SCOPE','OPEN',
     'CLOSE', 'DOT', 'COMMA', 'EXTERNCODE',
-    'STRING', 'COLON', 'SEMICOLON', 'DOLLAR'
+    'STRING', 'COLON', 'SEMICOLON', 'DOLLAR',
+    'LBRACKET','RBRACKET'
     ] + list(reserved.values())
 
 # Tokens
@@ -28,6 +30,8 @@ t_DIVIDE  = r'/'
 t_EQUALS  = r'='
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
+t_LBRACKET= r'\['
+t_RBRACKET= r'\]'
 t_SCOPE   = r'::'
 t_COLON   = r':'
 t_FLOAT   = r'\d+\.\d+'
@@ -60,7 +64,9 @@ def p_error(t):
 
 
 # Parsing rules
-FUNDEF,FUNCTION,EXTFUNCTION,CLASS,TEMPLATED,ARG,FNAME,TYPE,EXTTYPE,REF,PTR,CONST,OBJ,SUBOBJ,DEREF,LOCAT = range(16)
+FUNDEF,FUNCTION,EXTFUNCTION,CLASS,TEMPLATE_CLASS,ARG,FNAME,TYPE,EXTTYPE,REF,PTR,\
+    CONST,OBJ,SUBOBJ,DEREF,LOCAT,TEMPLATE_ARG,TEMPLATE_ARGSPEC,TEMPLATED_TYPE,\
+    CONSTRUCT, OPERATOR = range(21)
 
 precedence = ()
 
@@ -84,20 +90,82 @@ def p_segment_fn(t):
     'segment : function'
     t[0] = t[1]
 def p_segment_cls(t):
-    'segment : class'
+    'segment : tclass'
     t[0] = t[1]
+
+def p_operator_bracket(t):
+    'operator : OPERATOR LBRACKET RBRACKET'
+    t[0] = [OPERATOR, '[]']
 
 def p_fnname_id(t):
     'fnname : NAME'
+    t[0] = [FNAME, None, t[1]]
+def p_fnname_operator(t):
+    'fnname : operator'
     t[0] = [FNAME, None, t[1]]
 def p_fnname_class(t):
     'fnname : NAME SCOPE NAME'
     t[0] = [FNAME, t[1], t[3]]
 
 
+def p_templatearg_type(t):
+    'templatearg : NAME EQUALS NAME'
+    t[0] = [TEMPLATE_ARG, t[1], t[3]]
+def p_templatearg_bdata(t):
+    'templatearg : NAME EQUALS bdata'
+    t[0] = [TEMPLATE_ARG, t[1], t[3]]
+
+def p_templateargs_one(t):
+    'templateargs : templatearg'
+    t[0] = [t[1]]
+def p_templateargs_more(t):
+    'templateargs : templateargs templatearg'
+    tmp = t[1]
+    tmp.append(t[2])
+    t[0] = tmp
+
+
+#TODO figure out what to use for string's... maybe force const char*?
+def p_templargspec_type(t):
+    'templargspec : NAME NAME EQUALS NAME'
+    t[0] = [TEMPLATE_ARGSPEC, t[1], t[3]]
+    if t[1] != 'typename':
+        raise SyntaxError
+def p_templargspec_bdata(t):
+    'templargspec : NAME NAME EQUALS bdata'
+    t[0] = [TEMPLATE_ARGSPEC, t[1], t[2], t[4]]
+    if t[1] not in ['int','float','string']:
+        raise SyntaxError
+def p_templargspec_nodefault(t):
+    'templargspec : NAME NAME'
+    t[0] = [TEMPLATE_ARGSPEC, t[1], t[2], None]
+    if t[1] not in ['typename','int','float','string']:
+        raise SyntaxError
+
+def p_templargspecs_one(t):
+    'templargspecs : templargspec'
+    t[0] = [t[1]]
+def p_templargspecs_more(t):
+    'templargspecs : templargspecs templargspec'
+    tmp = t[1]
+    tmp.append(t[2])
+    t[0] = tmp
+
+
+def p_dname_name(t):
+    'dname : NAME'
+    t[0] = [OBJ, t[1]]
+def p_dname_more(t):
+    'dname : dname DOT NAME'
+    t[0] = [SUBOBJ, t[1], t[3]]
+
+
 def p_etype_plain(t):
-    'etype : NAME'
+    'etype : dname'
     t[0] = [TYPE, t[1]]
+def p_etype_templated(t):
+    'etype : dname LPAREN templateargs RPAREN'
+    t[0] = [TEMPLATED_TYPE, t[1], t[3]]
 def p_etype_external(t):
     'etype : DOLLAR NAME'
     t[0] = [EXTTYPE, t[1]]
@@ -121,22 +189,33 @@ def p_ctype_const(t):
     t[0] = [CONST, t[2]] #TODO make this like c++ const
 
 
-def p_dname_name(t):
-    'dname : NAME'
-    t[0] = [OBJ, t[1]]
-def p_dname_more(t):
-    'dname : dname DOT NAME'
-    t[0] = [SUBOBJ, t[1], t[3]]
+def p_constructor_args(t):
+    'constructor : dname LPAREN args RPAREN'
+    t[0] = [CONSTRUCT, t[1], t[3]]
+def p_constructor_void(t):
+    'constructor : dname LPAREN RPAREN'
+    t[0] = [CONSTRUCT, t[1], None]
+def p_constructor_tvoid(t):
+    'constructor : dname LPAREN templateargs RPAREN LPAREN RPAREN'
+    mytype = [TEMPLATED_TYPE, t[1], t[3]]
+    t[0] = [CONSTRUCT, mytype, None]
+def p_constructor_targs(t):
+    'constructor : dname LPAREN templateargs RPAREN LPAREN args RPAREN'
+    t[0] = [CONSTRUCT, mytype, t[6]]
 
-def p_data_int(t):
-    'data : INT'
+
+def p_bdata_int(t):
+    'bdata : INT'
     t[0] = int(t[1])
-def p_data_float(t):
-    'data : FLOAT'
+def p_bdata_float(t):
+    'bdata : FLOAT'
     t[0] = float(t[1])
-def p_data_string(t):
-    'data : STRING'
+def p_bdata_string(t):
+    'bdata : STRING'
     t[0] = t[1][1:-1]
+def p_data_bdata(t):
+    'data : bdata'
+    t[0] = t[1]
 def p_data_name(t):
     'data : dname'
     t[0] = t[1]
@@ -146,11 +225,13 @@ def p_data_ptr(t):
 def p_data_deref(t):
     'data : TIMES dname'
     t[0] = [DEREF, t[1]]
+def p_data_construct(t):
+    'data : constructor'
+    t[0] = t[1]
 
 def p_arg_required(t):
     'arg : ctype NAME'
     t[0] = [ARG, t[1], t[2], None]
-
 def p_arg_optional(t):
     'arg : ctype NAME EQUALS data'
     t[0] = [ARG, t[1], t[2], t[4]]
@@ -206,15 +287,15 @@ def p_fundefs_many(t):
     t[0] = tmp
 
 def p_class(t):
-    'class : CLASS OPEN fundefs CLOSE'
-    t[0] = [CLASS, fundefs]
+    'class : CLASS NAME OPEN fundefs CLOSE'
+    t[0] = [CLASS, t[2], t[4]]
 
-def p_tempclass_plain(t):
-    'tempclass : class'
+def p_tclass_template(t):
+    'tclass : TEMPLATE LPAREN templargspecs RPAREN class'
+    t[0] = [TEMPLATE_CLASS, t[3], t[5]]
+def p_tclass_plain(t):
+    'tclass : class'
     t[0] = t[1]
-def p_tempclass_template(t):
-    'tempclass : TEMPLATE LPAREN args RPAREN class'
-    t[0] = [TEMPLATED, t[3], t[5]]
 
 import ply.yacc as yacc
 import sys
