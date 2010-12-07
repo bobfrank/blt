@@ -1,0 +1,15 @@
+argfun (int arg=4)
+{
+}
+
+voidfun
+{
+}
+
+retfun => (int pass)
+{
+}
+
+fullfun (int x) => (int y=2, bigint z)
+{
+}

@@ -1,6 +1,9 @@
 // makes the class templatized... nowhere else can you change T to something else...
 //   i.e. no template<> on an individual member function
-template<typename T>
+// -- maybe have an option to say 'make template as pointer' so that you can
+//    have just one copy of the code in the binary... but only an option.. we
+//    still want some speed
+template(typename T)
 class range
 {
     init(T& begin, T& end);

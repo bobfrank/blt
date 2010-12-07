@@ -3,7 +3,7 @@ class vector
 {
     using range;
     init;
-    init(range<T>& init_list); // like c++0x initializer list... not sure it'll be a range though.. not as fast as it could be
+    init(range<T>& init_list); // something like c++0x initializer list..
     push_back(const T& item);
     size => (int size);
     reserve(int size);
@@ -23,12 +23,13 @@ vector::init
 {
 }
 
+// perhaps some lisp style lists
 vector::init(range& init_list)
     : data(0)
     , size(0)
     , reserved(0)
 {
-    while( !init_list.empty() ) { // need to figure out the best way..
+    while( !init_list.empty() ) { // need to figure out the best way.. this is slow
         self.push_back(item=init_list.front());
         init_list.pop_front();
     }
@@ -41,7 +42,12 @@ vector::get_range => (range<T> iterator)
     range<T> iterator(begin = &self.data[0],
                       end   = &self.data[self.size-1]);
     return(iterator=iterator);
+} => {
+    //clean up if not done by raii...
 }
+type fntype = 
+// cleaner<char*> bob(new char[10], delete[]);
+// cleaner<FILE*> fp(fopen(), fclose);
 
 ::unit_test // maybe something like this for unit tests? I think they should be close to the
             // actual code.. otherwise its too painful to make them
