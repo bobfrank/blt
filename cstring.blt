@@ -11,10 +11,10 @@ class parray
     append(int item);
 }
 
-// tilda means external object... not sure what it is... the language handler will
+// $ means external object... not sure what it is... the language handler will
 // deal with the object and we'll keep it as a pointer basically, but with some type
 // saftey
-~PARRAY parray::data;
+$PARRAY parray::data;
 
 parray::init
     : data( self.setup )
@@ -30,7 +30,7 @@ parray::del
 
 // second form of extern syntax if you want to add some variables...
 parray::append(int item)
-        = extern "Python" (~PARRAY array=self.data, int item=item) {{ array.append(item) }}
+        = extern "Python" ($PARRAY array=self.data, int item=item) {{ array.append(item) }}
 
 // no using self if called from init... maybe
-parray::setup = extern "Python" => (~PARRAY) {{ [] }}
+parray::setup = extern "Python" => ($PARRAY) {{ [] }}

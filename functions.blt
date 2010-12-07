@@ -1,9 +1,9 @@
-
+//comment
 strlen = extern "C" (const char* str)
                  => (int count) {{strlen}};
 
 parray::append(int item)
-        = extern "Python" (PARRAY array=self.data, int item=item) {{ array.append(item) }};
+        = extern "Python" ($PARRAY array=self.data, int item=item) {{ array.append(item) }};
 
 
 argfun (int arg=4)
