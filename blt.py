@@ -103,6 +103,14 @@ def p_operator_bracket(t):
     'operator : OPERATOR LBRACKET RBRACKET'
     t[0] = ['OPERATOR', '[]']
 
+# class FName {
+#     init( const char* scope=nullptr,
+#           const char* name );
+# }
+# fname(ID name)                     => (FName o) { return(o=FName(name=name)); }
+# fname(operator op)                 => (FName o) { return(o=FName(name=op.name)); }
+# fname(ID scope, SCOPE sc, ID name) => (FName o) { return(o=FName(scope=scope, name=name)); }
+
 def p_fnname_id(t):
     'fnname : ID'
     t[0] = ['FNAME', None, t[1]]
