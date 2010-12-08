@@ -7,6 +7,7 @@ parray::append(int item)
         = extern "Python" ($PARRAY array=self.data, int item=item)
         {{ array.append(item) }};
 
+nop = extern "Asm" {{nop}};
 
 argfun (int arg=4)
 {
@@ -22,7 +23,14 @@ retfun => (int pass)
 
 fullfun (int x) => (int y=2, bigint z)
 {
+    if( x > 10 ) {
+        return(z=20);
+    }
+    else {
+        return(z=100);
+    }
 }
+
 // range is something like c++0x initializer list.. maybe
 template(typename T)
 class vector
@@ -35,4 +43,12 @@ class vector
     resize(int size, const T& t=T() );
     get_range => (range(T=T)& iterator);
     operator[] (int offset) => (T& item);
+}
+
+// perhaps some lisp style lists
+vector::init(range(T=T)& init_list)
+    : data      = 0
+    , size      = 0
+    , reserved  = 0
+{
 }
