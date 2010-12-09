@@ -1,5 +1,6 @@
-import "string.h" with "C" as cstring
-import "string" with "Python" as string
+import "string.h" with "C" as cstring;
+import "string" with "Python" as pstring;
+import range;
 
 example_copy_data {
     cstring.memcpy( __dest=here,

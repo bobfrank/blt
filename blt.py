@@ -24,7 +24,10 @@ reserved = {
     'uint8':    'UINT8',
     'word':     'WORD',
     'hword':    'HWORD',
-    'dword':    'DWORD'
+    'dword':    'DWORD',
+    'import' :  'IMPORT',
+    'with':     'WITH',
+    'as':       'AS'
     }
 tokens = ['COMMENT',
     'ASSIGNOPER',
@@ -114,6 +117,16 @@ def p_segment_fn(t):
 def p_segment_cls(t):
     'segment : tclass'
     t[0] = t[1]
+def p_segment_import(t):
+    'segment : import'
+    t[0] = t[1]
+
+def p_import_extern(t):
+    'import : IMPORT STRINGCONST WITH STRINGCONST AS ID SEMICOLON'
+    t[0] = ['IMPORT_EXTERN',t[2][1:-1],t[4][1:-1],t[6]]
+def p_import_blt(t):
+    'import : IMPORT dname SEMICOLON'
+    t[0] = ['IMPORT',t[2]]
 
 def p_operator_bracket(t):
     'operator : OPERATOR LBRACKET RBRACKET'

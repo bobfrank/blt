@@ -1,3 +1,7 @@
+import "string.h" with "C" as cstring;
+import "string" with "Python" as pstring;
+import range;
+
 //comment
 strlen = extern "C" (const char* str)
                  => (int count)
