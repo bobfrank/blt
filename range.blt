@@ -3,7 +3,7 @@
 // -- maybe have an option to say 'make template as pointer' so that you can
 //    have just one copy of the code in the binary... but only an option.. we
 //    still want some speed
-template(typename T)
+template{typename T}
 class range
 {
     init(T& begin, T& end);
@@ -54,10 +54,10 @@ range::back => (T& item)
 
 
 // and to create a reserve range
-template(typename T)
+template{typename T}
 class reverse
 {
-    init(range(T=T)& original);
+    init(range{T=T}& original);
     empty => (bool empty);
     pop_front;
     front => (T& item);
@@ -65,9 +65,9 @@ class reverse
     back => (T& item);
 }
 
-range(T=T)& reverse::original;
+range{T=T}& reverse::original;
 
-reverse::init(range(T=T)& original)
+reverse::init(range{T=T}& original)
     : original( original )
 {
 }
@@ -99,7 +99,7 @@ reverse::back => (T& item)
 
 
 
-class xrange : range(T=bigint) // should be a forward-only range...
+class xrange : range{T=bigint} // should be a forward-only range...
 {
     init(bigint max=bigint::infinity);
     pop_back = no; // breaks the contract of being a range type... need to figure out how to make this pretty

@@ -1,0 +1,15 @@
+//thinking about how to design the language in itself
+
+typedef ID, SCOPE const char*;
+class Code {
+}
+class FName {
+    const char* scope = nullptr;
+    const char* name;
+    gencode => Code;
+}
+fname($ID name)                       => (FName o) { FName r(name  = name);               return(r); }
+fname($operator op)                   => (FName o) { FName r(name  = op.name);            return(r); }
+fname($ID scope, $SCOPE sc, $ID name) => (FName o) { FName r(scope = scope, name = name); return(r); }
+//fits within the confines of the language assuming that I have a compile-time
+//  'inspect' type capability

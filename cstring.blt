@@ -1,14 +1,25 @@
+import "string.h" with "C" as cstring
+import "string" with "Python" as string
+
+example_copy_data {
+    cstring.memcpy( __dest=here,
+                    __src=there,
+                    __n=blah );
+// TODO determine what to do if the c file didn't include the argument names
+}
+
 strlen = extern "C" (const char* str)
-                 => (int count) {{strlen}};
+                 => (word count) {{strlen}};
 
-memcpy = extern "C" (const void* dest, const void* src, unsigned int size)
-                 => (int count) {{memcpy}};
+memcpy = extern "C" (const byte* dest, const byte* src, uint32 size)
+                 => (int32 count) {{memcpy}};
 
+template(typename T)
 class parray
 {
     init;
     del;
-    append(int item);
+    append(T item);
 }
 
 // $ means external object... not sure what it is... the language handler will
@@ -29,7 +40,7 @@ parray::del
 }
 
 // second form of extern syntax if you want to add some variables...
-parray::append(int item)
+parray::append(dint item)
         = extern "Python" ($PARRAY array=self.data, int item=item) {{ array.append(item) }}
 
 // no using self if called from init... maybe
