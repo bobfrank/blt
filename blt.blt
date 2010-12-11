@@ -1,6 +1,5 @@
 //thinking about how to design the language in itself
 
-typedef ID, SCOPE const char*;
 class Code {
 }
 class FName {
@@ -8,8 +7,56 @@ class FName {
     const char* name;
     gencode => Code;
 }
-fname($ID name)                       => (FName o) { FName r(name  = name);               return(r); }
-fname($operator op)                   => (FName o) { FName r(name  = op.name);            return(r); }
-fname($ID scope, $SCOPE sc, $ID name) => (FName o) { FName r(scope = scope, name = name); return(r); }
+fname($ID name)                       => (FName o) { FName r(name = name);                return(r); }
+fname($operator op)                   => (FName o) { FName r(name = op.name);             return(r); }
+fname($ID scope, $SCOPE sc, $ID name) => (FName o) { FName r(name = name, scope = scope); return(r); }
 //fits within the confines of the language assuming that I have a compile-time
 //  'inspect' type capability
+
+callers<fname>
+::nom
+{
+}
+
+// Algorithm 4.59 : An easy, but space-consuming LALR table construction.
+// INPUT: An augmented grammar G'.
+// OUTPUT: The LALR parsing-table functions ACTION and GOT0 for
+// G'.
+// METHOD:
+// 1. Construct C = (Io, . . . , I,), the collection of sets of LR(1) items.
+// 11,
+// 2. For each core present among the set of LR(1) items, find all sets having
+// that core, and replace these sets by their union.
+// J1,.
+// 3. Let C' = {Jo, . . , J,) be the resulting sets of LR(1) items. The
+// parsing actions for state i are constructed from Ji in the same manner as
+// in Algorithm 4.56. If there is a parsing action conflict, the algorithm fails
+// to produce a parser, and the grammar is said not to be LALR(1).
+// 4. The GOTO table is constructed as follows. If J is the union of one or
+// n I k , then the
+// more sets of LR(1) items, that is, J = Il n I2 n
+// cores of G O T O ( I X,) , G O T O ( I X,) , . . . , GOTO(&, are the same, since
+// ~
+// ~
+// X)
+// 11, . . . , Ikall have the same core. Let K be the union of all sets of
+// 12,
+// items having the same core as G O T O ( I X). Then GOTO(J, ) = K.
+// ~,
+// X
+
+
+// There are several modifications we can make to Algorithm 4.59 to avoid con-
+// structing the full collection of sets of LR(1) items in the process of creating an
+// LALR(1) parsing table.
+// First, we can represent any set of LR(0) or LR(1) items I by its kernel,
+// that is, by those items that are' either the initial item - [Sf -+ .S] or
+// [St-+ -S,$1 - or that have the dot somewhere other than at the beginning
+// of the production body.
+// We can construct the LALR(1)-item kernels from the LR(0)-item kernels
+// by a process of propagation and spontaneous generation of lookaheads,
+// that we shall describe shortly.
+// If we have the LALR(1) kernels, we can generate the LALR(1) parsing
+// table by closing each kernel, using the function CLOSURE of Fig. 4.40, and
+// then computing table entries by Algorithm 4.56, as if the LALR(1) sets
+// of items were canonical LR(1) sets of items.

@@ -7,7 +7,6 @@ reserved = {
     'elif':     'ELIF',
     'else':     'ELSE',
     'if':       'IF',
-    'byte':     'BYTE', ## unsigned char in C
     'char':     'CHAR',
     'char16':   'CHAR16',
     'float16':  'FLOAT32',
@@ -432,6 +431,9 @@ def p_oblock_assignment(t):
     t[0] = t[1]
 def p_oblock_construct(t):
     'oblock : construct SEMICOLON'
+    t[0] = t[1]
+def p_oblock_block(t):
+    'oblock : block'
     t[0] = t[1]
 
 def p_blocks_one(t):

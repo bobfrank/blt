@@ -1,3 +1,5 @@
+import "string.h" with "C" as cstring;
+
 // class declaration... public members only
 class string
 {
@@ -16,9 +18,9 @@ const char* string::data;
 string::private_init(const char* data, int size)
 {
     self.data = new data[size+1];
-    .cstring.memcpy( src  = data,
-                     dest = self.data,
-                     size = size );
+    cstring.memcpy( __2  = data,     //src
+                    __1 = self.data, //dest
+                    __3 = size );    //size
 }
 
 string::init(const string& str)
@@ -30,11 +32,11 @@ string::init(const string& str)
 string::init(const char* str)
 {
     self.private_init( str  = str,
-                       size = .cstring.strlen(str=str) );
+                       size = cstring.strlen(str) );
 }
 
 string::init
-    : data( 0 )
+    : data = 0
 {
 }
 
@@ -50,8 +52,7 @@ string::c_str => (const char* str)
 
 string::size => (int size)
 {
-    using cstring; // must be scoped... no global using namespace or include like stuff
-    return(size = strlen(str=self.data) );
+    return( cstring.strlen(self.data) );
 }
 
 //creates a function 'fun' which is hidden in the same sense as a static function in c
