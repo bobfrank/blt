@@ -38,13 +38,12 @@ fullfun (int x) => (int y=2, bigint z)
     }
 }
 
-// range is something like c++0x initializer list.. maybe
 template<typename T>
 class vector
 {
     typedef range.range<T=T> range_T;
     init; //a regular comment
-    init(range_T& init_list);
+    init(range_T& init_list); // range is something like c++0x initializer list.. maybe
     push_back(const T& item);
     size => (int size);
     reserve(int size);
@@ -59,4 +58,5 @@ vector::init(range_T& init_list)
     , size      = 0
     , reserved  = 0
 {
+    auto x = retfun();
 }

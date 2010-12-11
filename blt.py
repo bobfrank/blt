@@ -31,7 +31,11 @@ reserved = {
     'typedef':  'TYPEDEF'
     }
 tokens = ['ASSIGNOPER',
-    'ID','POINTS', 'BITAND',
+    'LTE','GTE','NE','LOGNOT','LOGOR','LOGAND',
+    'BITNOT','BITAND','BITOR','BITXOR','BITLEFT',
+    'BITRIGHT','MOD','INCREMENT','DECREMENT',
+    'QUESTION', 'EQ', 'SUBSCRIPT', 'MEMBERPTR',
+    'ID','POINTS',
     'PLUS','MINUS','TIMES','DIVIDE','EQUALS',
     'LPAREN','RPAREN', 'SCOPE','OPEN',
     'CLOSE', 'DOT', 'COMMA', 'EXTERNCODE',
@@ -46,12 +50,30 @@ t_ASSIGNOPER    = r'(\+=|-=|\*=|/=|%=|^=|&=|>>=|<<=|\*\*=)'
 t_STRINGCONST   = r'".*?"'
 t_FLOATCONST    = r'\d+\.\d+'
 t_INTCONST      = r'\d+'
-t_POINTS        = r'=>'
-t_GT            = r'>'
-t_LT            = r'<'
 t_OPEN          = r'{'
 t_CLOSE         = r'}'
+t_SUBSCRIPT     = r'\[\]'
+t_OPFUNCALL     = r'\(\)'
+t_EQ            = r'=='
+t_POINTS        = r'=>'
+t_MEMBERPTR     = r'->'
+t_LTE           = r'<='
+t_GTE           = r'>='
+t_NE            = r'!='
+t_GT            = r'>'
+t_LT            = r'<'
+t_LOGNOT        = r'!'
+t_LOGOR         = r'\|\|'
+t_LOGAND        = r'&&'
+t_BITNOT        = r'~'
 t_BITAND        = r'&'
+t_BITOR         = r'\|'
+t_BITXOR        = r'\^'
+t_BITLEFT       = r'<<'
+t_BITRIGHT      = r'>>'
+t_MOD           = r'%'
+t_INCREMENT     = r'\+\+'
+t_DECREMENT     = r'--'
 t_PLUS          = r'\+'
 t_MINUS         = r'-'
 t_TIMES         = r'\*'
@@ -62,6 +84,7 @@ t_RPAREN        = r'\)'
 t_LBRACKET      = r'\['
 t_RBRACKET      = r'\]'
 t_SCOPE         = r'::'
+t_QUESTION      = r'\?'
 t_COLON         = r':'
 t_DOT           = r'\.'
 t_COMMA         = r','
@@ -78,6 +101,7 @@ def t_ID(t):
 def t_newline(t):
     r'(//[^\n]*)?\n+'
     t.lexer.lineno += t.value.count("\n")
+    t.lexer.current = t.lexer.lexpos
     
 def t_error(t):
     print( "Illegal character '%s'" % t.value[0])
@@ -88,7 +112,7 @@ import ply.lex as lex
 lex.lex()
 
 def p_error(t):
-    print( "Syntax error at '%s' on line %d" % (t.value, t.lexer.lineno))
+    print( "Syntax error at '%s' on line %d, col %d" % (t.value, t.lexer.lineno, t.lexer.lexpos-t.lexer.current))
 
 
 # Parsing rules
@@ -125,9 +149,39 @@ def p_import_blt(t):
     'import : IMPORT dname'
     t[0] = ['IMPORT',t[2]]
 
+def p_overloadable(t):
+    '''overloadable : EQUALS
+                    | PLUS
+                    | MINUS
+                    | TIMES
+                    | DIVIDE
+                    | MOD
+                    | INCREMENT
+                    | DECREMENT
+                    | EQ
+                    | NE
+                    | GT
+                    | LT
+                    | GTE
+                    | LTE
+                    | LOGNOT
+                    | LOGAND
+                    | LOGOR
+                    | BITNOT
+                    | BITAND
+                    | BITOR
+                    | BITXOR
+                    | BITLEFT
+                    | BITRIGHT
+                    | ASSIGNOPER
+                    | SUBSCRIPT
+                    | OPFUNCALL
+                    | MEMBERPTR'''
+    t[0] = t[1]
+
 def p_operator_bracket(t):
-    'operator : OPERATOR LBRACKET RBRACKET'
-    t[0] = ['OPERATOR', '[]'] #TODO
+    'operator : OPERATOR overloadable'
+    t[0] = ['OPERATOR', t[2]]
 
 
 def p_templatearg_type(t):
