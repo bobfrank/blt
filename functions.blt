@@ -8,7 +8,7 @@ strlen = extern "C" (const char* str)
                  {{strlen}};
 
 parray::append(int item)
-        = extern "Python" ($PARRAY array=self.data, int item=item)
+        = extern "Python" (auto array=self.data, int item=item)
         {{ array.append(item) }};
 
 nop = extern "Asm" {{nop}};
@@ -39,21 +39,22 @@ fullfun (int x) => (int y=2, bigint z)
 }
 
 // range is something like c++0x initializer list.. maybe
-template{typename T}
+template<typename T>
 class vector
 {
-    init;
-    init(range.range{T=T}& init_list);
+    typedef range.range<T=T> range_T;
+    init; //a regular comment
+    init(range_T& init_list);
     push_back(const T& item);
     size => (int size);
     reserve(int size);
     resize(int size, const T& t=T() );
-    get_range => (range{T=T}& iterator);
+    get_range => (range_T& iterator);
     operator[] (int offset) => (T& item);
 }
 
 // perhaps some lisp style lists
-vector::init(range{T=T}& init_list)
+vector::init(range_T& init_list)
     : data      = 0
     , size      = 0
     , reserved  = 0

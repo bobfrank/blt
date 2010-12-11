@@ -11,6 +11,7 @@ reserved = {
     'char16':   'CHAR16',
     'float16':  'FLOAT32',
     'float32':  'FLOAT64',
+    'float128': 'FLOAT128',
     'int128':   'INT128',
     'int64':    'INT64',
     'int32':    'INT32',
@@ -26,34 +27,33 @@ reserved = {
     'dword':    'DWORD',
     'import' :  'IMPORT',
     'with':     'WITH',
-    'as':       'AS'
+    'as':       'AS',
+    'typedef':  'TYPEDEF'
     }
-tokens = ['COMMENT',
-    'ASSIGNOPER',
+tokens = ['ASSIGNOPER',
     'ID','POINTS', 'BITAND',
     'PLUS','MINUS','TIMES','DIVIDE','EQUALS',
     'LPAREN','RPAREN', 'SCOPE','OPEN',
     'CLOSE', 'DOT', 'COMMA', 'EXTERNCODE',
-    'COLON', 'SEMICOLON', 'DOLLAR',
-    'LBRACKET','RBRACKET', 'GT',
+    'COLON', 'SEMICOLON',
+    'LBRACKET','RBRACKET', 'GT', 'LT',
     'INTCONST', 'FLOATCONST', 'STRINGCONST'
     ] + list(reserved.values())
 
 # Tokens
 
 t_ASSIGNOPER    = r'(\+=|-=|\*=|/=|%=|^=|&=|>>=|<<=|\*\*=)'
-t_COMMENT       = r'//[^\n\r]*'
 t_STRINGCONST   = r'".*?"'
 t_FLOATCONST    = r'\d+\.\d+'
 t_INTCONST      = r'\d+'
 t_POINTS        = r'=>'
 t_GT            = r'>'
+t_LT            = r'<'
 t_OPEN          = r'{'
 t_CLOSE         = r'}'
 t_BITAND        = r'&'
 t_PLUS          = r'\+'
 t_MINUS         = r'-'
-t_DOLLAR        = r'\$'
 t_TIMES         = r'\*'
 t_DIVIDE        = r'/'
 t_EQUALS        = r'='
@@ -76,7 +76,7 @@ def t_ID(t):
     return t
 
 def t_newline(t):
-    r'\n+'
+    r'(//[^\n]*)?\n+'
     t.lexer.lineno += t.value.count("\n")
     
 def t_error(t):
@@ -86,6 +86,7 @@ def t_error(t):
 # Build the lexer
 import ply.lex as lex
 lex.lex()
+
 def p_error(t):
     print( "Syntax error at '%s' on line %d" % (t.value, t.lexer.lineno))
 
@@ -95,20 +96,14 @@ def p_error(t):
 precedence = ()
 
 def p_code_one(t):
-    'code : comsegment'
+    'code : segment'
     t[0] = [t[1]]
 def p_code_more(t):
-    'code : code comsegment'
+    'code : code segment'
     tmp = t[1]
     tmp.append(t[2])
     t[0] = tmp
 
-def p_comsegment_plain(t):
-    'comsegment : segment'
-    t[0] = t[1]
-def p_comsegment_comment(t):
-    'comsegment : COMMENT segment'
-    t[0] = t[2]
 
 def p_segment_fn(t):
     'segment : function'
@@ -117,19 +112,22 @@ def p_segment_cls(t):
     'segment : tclass'
     t[0] = t[1]
 def p_segment_import(t):
-    'segment : import'
+    'segment : import SEMICOLON'
+    t[0] = t[1]
+def p_segment_deftype(t):
+    'segment : deftype SEMICOLON'
     t[0] = t[1]
 
 def p_import_extern(t):
-    'import : IMPORT STRINGCONST WITH STRINGCONST AS ID SEMICOLON'
+    'import : IMPORT STRINGCONST WITH STRINGCONST AS ID'
     t[0] = ['IMPORT_EXTERN',t[2][1:-1],t[4][1:-1],t[6]]
 def p_import_blt(t):
-    'import : IMPORT dname SEMICOLON'
+    'import : IMPORT dname'
     t[0] = ['IMPORT',t[2]]
 
 def p_operator_bracket(t):
     'operator : OPERATOR LBRACKET RBRACKET'
-    t[0] = ['OPERATOR', '[]']
+    t[0] = ['OPERATOR', '[]'] #TODO
 
 
 def p_templatearg_type(t):
@@ -184,55 +182,24 @@ def p_dname_more(t):
     t[0] = ['SUBUTYPE', t[1], t[3]]
 
 def p_basictype_char(t):
-    'basictype : CHAR'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_char16(t):
-    'basictype : CHAR16'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_int128(t):
-    'basictype : INT128'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_int64(t):
-    'basictype : INT64'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_int32(t):
-    'basictype : INT32'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_int16(t):
-    'basictype : INT16'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_int8(t):
-    'basictype : INT8'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_uint128(t):
-    'basictype : UINT128'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_uint64(t):
-    'basictype : UINT64'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_uint32(t):
-    'basictype : UINT32'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_uint16(t):
-    'basictype : UINT16'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_uint8(t):
-    'basictype : UINT8'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_word(t):
-    'basictype : WORD'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_hword(t):
-    'basictype : HWORD'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_dword(t):
-    'basictype : DWORD'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_float32(t):
-    'basictype : FLOAT32'
-    t[0] = ['BASICTYPE', t[1]]
-def p_basictype_float64(t):
-    'basictype : FLOAT64'
+    '''basictype : CHAR
+                 | CHAR16
+                 | INT128
+                 | INT64
+                 | INT32
+                 | INT16
+                 | INT8
+                 | UINT128
+                 | UINT64
+                 | UINT32
+                 | UINT16
+                 | UINT8
+                 | WORD
+                 | HWORD
+                 | DWORD
+                 | FLOAT32
+                 | FLOAT64
+                 | FLOAT128'''
     t[0] = ['BASICTYPE', t[1]]
 
 def p_etype_plain(t):
@@ -241,12 +208,9 @@ def p_etype_plain(t):
 def p_etype_basictype(t):
     'etype : basictype'
     t[0] = t[1]
-def p_etype_templated(t):
-    'etype : dname OPEN templateargs CLOSE'
-    t[0] = ['TEMPLATED_TYPE', t[1], t[3]]
-def p_etype_external(t):
-    'etype : DOLLAR ID'
-    t[0] = ['EXTTYPE', t[2]]
+#def p_etype_templated(t):
+#    'etype : dname OPEN templateargs CLOSE'
+#    t[0] = ['TEMPLATED_TYPE', t[1], t[3]]
 def p_rtype_plain(t):
     'rtype : etype'
     t[0] = t[1]
@@ -265,6 +229,13 @@ def p_ctype_plain(t):
 def p_ctype_const(t):
     'ctype : CONST ptype'
     t[0] = ['CONST', t[2]] #TODO make this like c++ const
+
+def p_deftype_basic(t):
+    'deftype : TYPEDEF ctype ID'
+    t[0] = ['DEFTYPE',t[2],t[1]]
+def p_deftype_template(t):
+    'deftype : TYPEDEF dname LT templateargs GT ID'
+    t[0] = ['DEFTYPE',t[6],['TEMPLATE',t[2],t[4]]]
 
 
 def p_constructor_args(t):
@@ -481,6 +452,9 @@ def p_function_extern(t):
 def p_fundef(t):
     'fundef : fnname argret SEMICOLON'
     t[0] = ['FUNDEF', t[1], t[2]]
+def p_fundef_deftype(t):
+    'fundef : deftype SEMICOLON'
+    t[0] = t[1]
 
 def p_fundefs_one(t):
     'fundefs : fundef'
@@ -496,7 +470,7 @@ def p_class(t):
     t[0] = ['CLASS', t[2], t[4]]
 
 def p_tclass_template(t):
-    'tclass : TEMPLATE OPEN templargspecs CLOSE class'
+    'tclass : TEMPLATE LT templargspecs GT class'
     t[0] = ['TEMPLATE_CLASS', t[3], t[5]]
 def p_tclass_plain(t):
     'tclass : class'
