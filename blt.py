@@ -35,7 +35,7 @@ tokens = ['ASSIGNOPER',
     'BITNOT','BITAND','BITOR','BITXOR','BITLEFT',
     'BITRIGHT','MOD','INCREMENT','DECREMENT',
     'QUESTION', 'EQ', 'SUBSCRIPT', 'MEMBERPTR',
-    'ID','POINTS', 'OPFUNCALL',
+    'ID','POINTS',
     'PLUS','MINUS','TIMES','DIVIDE','EQUALS',
     'LPAREN','RPAREN', 'SCOPE','OPEN',
     'CLOSE', 'DOT', 'COMMA', 'EXTERNCODE',
@@ -263,9 +263,6 @@ def p_etype_plain(t):
 def p_etype_basictype(t):
     'etype : basictype'
     t[0] = t[1]
-#def p_etype_templated(t):
-#    'etype : dname OPEN templateargs CLOSE'
-#    t[0] = ['TEMPLATED_TYPE', t[1], t[3]]
 def p_rtype_plain(t):
     'rtype : etype'
     t[0] = t[1]
@@ -293,21 +290,6 @@ def p_deftype_template(t):
     t[0] = ['DEFTYPE',t[6],['TEMPLATE',t[2],t[4]]]
 
 
-def p_constructor_args(t):
-    'constructor : dname LPAREN args RPAREN'
-    t[0] = ['CONSTRUCT', t[1], t[3]]
-def p_constructor_void(t):
-    'constructor : dname LPAREN RPAREN'
-    t[0] = ['CONSTRUCT', t[1], None]
-def p_constructor_tvoid(t):
-    'constructor : dname LPAREN templateargs RPAREN LPAREN RPAREN'
-    mytype = [TEMPLATED_TYPE, t[1], t[3]]
-    t[0] = ['CONSTRUCT', mytype, None]
-def p_constructor_targs(t):
-    'constructor : dname LPAREN templateargs RPAREN LPAREN args RPAREN'
-    mytype = [TEMPLATED_TYPE, t[1], t[3]]
-    t[0] = ['CONSTRUCT', mytype, t[6]]
-
 def p_constant_int(t):
     'constant : INTCONST'
     t[0] = int(t[1])
@@ -322,7 +304,7 @@ def p_data_constant(t):
     'data : constant'
     t[0] = t[1]
 def p_data_passedin(t):
-    'data : CONST LT ID GT'
+    'data : CONST LBRACKET ID RBRACKET'
     t[0] = ['BLT_PARAM',t[3]]
 def p_data_name(t):
     'data : dname'
@@ -333,8 +315,8 @@ def p_data_ptr(t):
 def p_data_deref(t):
     'data : TIMES dname'
     t[0] = ['DEREF', t[1]]
-def p_data_construct(t):
-    'data : constructor'
+def p_data_funcall(t):
+    'data : funcall'
     t[0] = t[1]
 
 def p_arg_required(t):
@@ -440,21 +422,11 @@ def p_construct_plain(t):
     t[0] = ['CONSTRUCT',t[1],t[2],t[4]]
 
 
-def p_fnname_id(t):
-    'fnname : ID'
-    t[0] = ['FNAME', None, t[1]]
-def p_fnname_operator(t):
-    'fnname : operator'
-    t[0] = ['FNAME', None, t[1]]
-def p_fnname_class(t):
-    'fnname : ID SCOPE ID'
-    t[0] = ['FNAME', t[1], t[3]]
-
 def p_funcall_args(t):
-    'funcall : fnname LPAREN callargs RPAREN'
+    'funcall : dname LPAREN callargs RPAREN'
     t[0] = ['FUNCALL', t[1], t[3]]
 def p_funcall_void(t):
-    'funcall : fnname LPAREN RPAREN'
+    'funcall : dname LPAREN RPAREN'
     t[0] = ['FUNCALL', t[1], None]
 
 
@@ -504,16 +476,24 @@ def p_argret_return(t):
     'argret : POINTS LPAREN args RPAREN'
     t[0] = [None, t[3]]
 
-#def p_fnnamenull_private(t):
-#    'fnnamenull : SCOPE ID'
-#    t[0] = ['LINK_PRIVATE',t[2]]
-def p_fnnamenull(t):
-    'fnnamenull : fnname'
-    t[0] = t[1]
+
+def p_fnname_id(t):
+    'fnname : ID'
+    t[0] = ['FNAME', None, t[1]]
+def p_fnname_operator(t):
+    'fnname : operator'
+    t[0] = ['FNAME', None, t[1]]
+def p_fnname_class(t):
+    'fnname : ID SCOPE ID'
+    t[0] = ['FNAME', t[1], t[3]]
+
 
 def p_function_args(t):
-    'function : fnnamenull argret block'
+    'function : fnname argret block'
     t[0] = ['FUNCTION', t[1], t[2], t[3]]
+def p_function_private(t):
+    'function : SCOPE fnname argret block'
+    t[0] = ['FUNCTION_LINK_PRIVATE', t[2], t[3], t[4]]
 def p_function_init(t):
     'function : fnname argret COLON callargs block'
     t[0] = ['INITFUNCTION', t[1], t[2], t[4], t[5]]

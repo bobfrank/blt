@@ -5,6 +5,10 @@ import "string.pm" with "Perl" as plstring;
 import range;
 
 //comment
+// -- note that there is no long style comment like in C
+// ... you'll have to use a nice editor (like vim) that makes
+//      it easy to comment multiline like this
+
 strlen = extern "C" (const char* str)
                  => (int count)
                  {{strlen}};
@@ -28,9 +32,12 @@ blarg (const T& t) => (int size) {
     return( t.size() );
 }
 
+// any functions should only use functions defined before it...
+// and no dependencies across files...
+// this forces 
 ::test_blarg
 {
-    if( const<debugging> == "TRUE") {
+    if( const[debugging] == "TRUE") {
     }
     print(blarg("test"));
 }
@@ -43,7 +50,7 @@ retfun => (int pass)
 
 fullfun (int x) => (int y=2, bigint z)
 {
-    halffun (int x) => (int abc) { return abc*abc; }
+    //halffun (int x) => (int abc) { return abc*abc; }
     if( x > 10 ) {
         return(20);
     }
@@ -66,7 +73,7 @@ class vector
     operator[] (int offset) => (T& item);
 }
 
-// perhaps some lisp style lists
+// a class must be declared before any of its functions can be defined
 vector::init(range_T& init_list)
     : data      = 0
     , size      = 0
