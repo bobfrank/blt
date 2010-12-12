@@ -35,7 +35,7 @@ tokens = ['ASSIGNOPER',
     'BITNOT','BITAND','BITOR','BITXOR','BITLEFT',
     'BITRIGHT','MOD','INCREMENT','DECREMENT',
     'QUESTION', 'EQ', 'SUBSCRIPT', 'MEMBERPTR',
-    'ID','POINTS',
+    'ID','POINTS', 'OPFUNCALL',
     'PLUS','MINUS','TIMES','DIVIDE','EQUALS',
     'LPAREN','RPAREN', 'SCOPE','OPEN',
     'CLOSE', 'DOT', 'COMMA', 'EXTERNCODE',
@@ -53,7 +53,6 @@ t_INTCONST      = r'\d+'
 t_OPEN          = r'{'
 t_CLOSE         = r'}'
 t_SUBSCRIPT     = r'\[\]'
-t_OPFUNCALL     = r'\(\)'
 t_EQ            = r'=='
 t_POINTS        = r'=>'
 t_MEMBERPTR     = r'->'
@@ -149,7 +148,7 @@ def p_import_blt(t):
     'import : IMPORT dname'
     t[0] = ['IMPORT',t[2]]
 
-def p_overloadable(t):
+def p_overloadable_main(t):
     '''overloadable : EQUALS
                     | PLUS
                     | MINUS
@@ -160,7 +159,7 @@ def p_overloadable(t):
                     | DECREMENT
                     | EQ
                     | NE
-                    | GT
+                    | GT    
                     | LT
                     | GTE
                     | LTE
@@ -175,9 +174,11 @@ def p_overloadable(t):
                     | BITRIGHT
                     | ASSIGNOPER
                     | SUBSCRIPT
-                    | OPFUNCALL
                     | MEMBERPTR'''
     t[0] = t[1]
+def p_overloadable_fun(t):
+    'overloadable : LPAREN RPAREN'
+    t[0] = '%s%s'%(t[1],t[2])
 
 def p_operator_bracket(t):
     'operator : OPERATOR overloadable'
@@ -320,6 +321,9 @@ def p_constant_string(t):
 def p_data_constant(t):
     'data : constant'
     t[0] = t[1]
+def p_data_passedin(t):
+    'data : CONST LT ID GT'
+    t[0] = ['BLT_PARAM',t[3]]
 def p_data_name(t):
     'data : dname'
     t[0] = t[1]
@@ -371,9 +375,18 @@ def p_callargs_single(t):
     t[0] = ['CALLARG_ONE',t[1]]
 
 
+def p_cmpop(t):
+    '''cmpop : EQ
+             | LTE
+             | GTE
+             | NE
+             | GT
+             | LT'''
+    t[0] = t[1]
+
 def p_compare(t):
-    'compare : rtype GT data' #TODO actually write this up.. just want it to compile
-    t[0] = ['GT', t[1], t[3]]
+    'compare : data cmpop data'
+    t[0] = [t[2], t[1], t[3]]
 
 def p_bareif(t):
     'bareif : IF LPAREN compare RPAREN block'
@@ -491,9 +504,15 @@ def p_argret_return(t):
     'argret : POINTS LPAREN args RPAREN'
     t[0] = [None, t[3]]
 
+#def p_fnnamenull_private(t):
+#    'fnnamenull : SCOPE ID'
+#    t[0] = ['LINK_PRIVATE',t[2]]
+def p_fnnamenull(t):
+    'fnnamenull : fnname'
+    t[0] = t[1]
 
 def p_function_args(t):
-    'function : fnname argret block'
+    'function : fnnamenull argret block'
     t[0] = ['FUNCTION', t[1], t[2], t[3]]
 def p_function_init(t):
     'function : fnname argret COLON callargs block'
@@ -503,24 +522,24 @@ def p_function_extern(t):
     t[0] = ['EXTFUNCTION', t[1], t[2], t[5][1:-1], t[6], t[7][2:-2]]
 
 
-def p_fundef(t):
-    'fundef : fnname argret SEMICOLON'
+def p_fundec(t):
+    'fundec : fnname argret'
     t[0] = ['FUNDEF', t[1], t[2]]
-def p_fundef_deftype(t):
-    'fundef : deftype SEMICOLON'
+def p_fundec_deftype(t):
+    'fundec : deftype'
     t[0] = t[1]
 
-def p_fundefs_one(t):
-    'fundefs : fundef'
+def p_fundecs_one(t):
+    'fundecs : fundec SEMICOLON'
     t[0] = [t[1]]
-def p_fundefs_many(t):
-    'fundefs : fundefs fundef'
+def p_fundecs_many(t):
+    'fundecs : fundecs fundec SEMICOLON'
     tmp = t[1]
     tmp.append(t[2])
     t[0] = tmp
 
 def p_class(t):
-    'class : CLASS ID OPEN fundefs CLOSE'
+    'class : CLASS ID OPEN fundecs CLOSE'
     t[0] = ['CLASS', t[2], t[4]]
 
 def p_tclass_template(t):

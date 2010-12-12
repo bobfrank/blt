@@ -1,5 +1,7 @@
 import "string.h" with "C" as cstring;
-import "string" with "Python" as pstring;
+import "string" with "Python" as pystring;
+import "string.hs" with "Haskell" as hsstring;
+import "string.pm" with "Perl" as plstring;
 import range;
 
 //comment
@@ -22,6 +24,17 @@ voidfun
 {
 }
 
+blarg (const T& t) => (int size) {
+    return( t.size() );
+}
+
+::test_blarg
+{
+    if( const<debugging> == "TRUE") {
+    }
+    print(blarg("test"));
+}
+
 retfun => (int pass)
 {
     f -= 10;
@@ -30,6 +43,7 @@ retfun => (int pass)
 
 fullfun (int x) => (int y=2, bigint z)
 {
+    halffun (int x) => (int abc) { return abc*abc; }
     if( x > 10 ) {
         return(20);
     }
