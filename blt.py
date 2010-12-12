@@ -292,13 +292,13 @@ def p_deftype_template(t):
 
 def p_constant_int(t):
     'constant : INTCONST'
-    t[0] = int(t[1])
+    t[0] = ['CONSTANT_INCODE',int(t[1])]
 def p_constant_float(t):
     'constant : FLOATCONST'
-    t[0] = float(t[1])
+    t[0] = ['CONSTANT_INCODE',float(t[1])]
 def p_constant_string(t):
     'constant : STRINGCONST'
-    t[0] = t[1][1:-1]
+    t[0] = ['CONSTANT_INCODE',t[1][1:-1]]
 
 def p_data_constant(t):
     'data : constant'

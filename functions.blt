@@ -46,6 +46,7 @@ retfun => (int pass)
 {
     f -= 10;
     self.blah /= 3;
+    int x = 2/0;
 }
 
 fullfun (int x) => (int y=2, bigint z)
