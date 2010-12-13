@@ -1,11 +1,12 @@
+//g++ -std=c++0x nocyclerecdec.cpp -fno-deduce-init-list -o nocyclerecdec
 #include <vector>
 #include <unordered_map>
 #include <set>
 #include <iostream>
 
 // now converting it to an acyclic recursive descent parser
-typedef enum {PLUS,TIMES,LPAREN,RPAREN,ID,p_exp,p_exp_a,p_times,p_times_a,p_fact,TOKEN_COUNT} Token;
-const char*token_names[] = {"PLUS","TIMES","LPAREN","RPAREN","ID","exp","exp'","times","times'","fact" };
+typedef enum {PLUS,TIMES,LPAREN,RPAREN,ID,DOT,p_exp,p_times,p_fact,p_dname,TOKEN_COUNT} Token;
+const char*token_names[] = {"PLUS","TIMES","LPAREN","RPAREN","ID","DOT","exp","times","fact","name" };
 
 struct token_hash { int operator()(Token token) const { return static_cast<int>(token); } };
 typedef std::vector<Token> token_vector;
@@ -16,8 +17,13 @@ struct SyntaxError {};
 // AST
 struct Tree {
     Tree(Token token) : m_token(token) {}
-    Tree* add_child(Token token) { m_children.push_back(Tree(token)); return &m_children[m_children.size()-1];} //first return is invalid if called again
+    //first child returned is invalid if called again
+    Tree* add_child(Token token) { m_children.push_back(Tree(token)); return &m_children[m_children.size()-1];}
+    // makes a copy of the tree passed in
+    void add_child(const Tree& tree) { m_children.push_back(tree);}
     Token id() const { return m_token; }
+    const std::vector<Tree>& children() const { return m_children; }
+    std::vector<Tree>& children() { return m_children; }
     void clear() { m_children.clear(); }
     void print_indent(std::ostream& os, int indent) const {
         for( int k = 0; k < indent; ++k ) {
@@ -49,11 +55,11 @@ struct Tree {
     std::vector<Tree> m_children;
 };
 
+//TODO clean this left recursion adjustment stuff up...
+//     its like 2x as large as the whole LL(k) parser
 void remove_left_recursion( grammar& new_g,
                             const grammar& g )
 {
-    //TODO clean this up... just want a first scetch working for now
-
     typedef std::set<Token> token_set;
     token_set left_recursive_tokens;
 
@@ -96,6 +102,42 @@ void remove_left_recursion( grammar& new_g,
         if( left_recursive_tokens.count(it->first)==0 ) {
             new_g.insert( *it );
         }
+    }
+}
+
+void fix_left_recursion_tree( Tree& tree )
+{
+    int tree_size = tree.children().size()-1;
+    if( !tree.children().empty() )
+    {
+        int tree_size   = tree.children().size()-1;
+        Token old_token = tree.children()[tree_size].id();
+        Token new_token = (Token)((int)old_token-TOKEN_COUNT);
+
+        if( (int)old_token  >= TOKEN_COUNT )
+        {
+            Tree last(TOKEN_COUNT);
+            Tree& current = tree;
+            while(!current.children().empty())
+            {
+                int current_size = current.children().size()-1;
+                Tree new_tree(new_token);
+                if( last.id() != TOKEN_COUNT ) {
+                    new_tree.add_child(last);
+                }
+                for( int i = 0; i < current_size; ++i ) {
+                    new_tree.add_child( current.children()[i] );
+                }
+                last = new_tree;
+                current = current.children()[ current_size ];
+            }
+            tree = last;
+        }
+    }
+    for( int i = 0; i < tree.children().size(); ++i )
+    {
+        // no child left behind
+        fix_left_recursion_tree( tree.children()[i] );
     }
 }
 
@@ -143,6 +185,8 @@ bool parse( Tree*               root,
     return false;
 }
 
+
+
 int main()
 {
     //exp     : exp PLUS times | times
@@ -154,7 +198,9 @@ int main()
         {p_times,   {p_times,TIMES,p_fact}},
         {p_times,   {p_fact}},
         {p_fact,    {LPAREN,p_exp,RPAREN}},
-        {p_fact,    {ID}}
+        {p_fact,    {ID}},
+        {p_dname,   {ID}},
+        {p_dname,   {p_dname,DOT,ID}}
     };
     grammar nlr_g;
     remove_left_recursion( nlr_g, g );
@@ -163,6 +209,7 @@ int main()
     int nf=0;
     bool parsed = parse(&root, &nf, nlr_g, input);
     if( parsed ) {
+        fix_left_recursion_tree(root);
         root.print(std::cout);
     }
 }
