@@ -24,7 +24,6 @@ private:
     int                 m_point_location;
 };
 typedef std::set<Atom> atom_set;
-typedef std::set<atom_set> dfa;
 
 Atom::Atom( token t, const token_vector& tokens, int point_location )
     : m_t(t)
@@ -141,28 +140,25 @@ void build_dfa()
     // Then, repeat until it is not possible to add any further elements: for each element
     //     (set) I in the DFA and for each grammar symbol X, add goto(I,X) (if not empty) to the DFA.
 
-    dfa my_dfa;
 
-    token_vector first = {p_exp};
-    atom_set atoms = {Atom(p_S, first, 0)};
-    get_closure(atoms, g);
-    my_dfa.insert( atoms );
-
-    for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
-    {
-        for( int i = 0; i < 9; ++i ) {
-            atom_set after_token_i;
-            get_goto( after_token_i, *dfa_it, g, i );
-            if( !after_token_i.empty() )
-            {
-                std::pair<dfa::iterator,bool> out = my_dfa.insert( after_token_i );
-                if( out.second ) {
-                    dfa_it = my_dfa.begin();
-                }
-            }
-        }
-    }
 }
+
+class labelled_atom_set {
+public:
+    labelled_atom_set(int label, const atom_set& atoms) : m_atoms(atoms), m_label(label) {}
+    int label() const { return m_label; }
+    const atom_set& atoms() const { return m_atoms; }
+private:
+    int m_label;
+    atom_set m_atoms;
+};
+bool
+operator<(const labelled_atom_set& lhs,
+          const labelled_atom_set& rhs)
+{
+    return lhs.atoms() < rhs.atoms();
+}
+typedef std::set<labelled_atom_set> dfa;
 
 int main()
 {
@@ -180,19 +176,23 @@ int main()
     token_vector first = {p_exp};
     atom_set atoms = {Atom(p_S, first, 0)};
     get_closure(atoms, g);
-    my_dfa.insert( atoms );
-
+    labelled_atom_set first_label(0,atoms);
+    my_dfa.insert( first_label );
+    int count = 0;
     for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
     {
         for( int i = 0; i < 9; ++i ) {
             atom_set after_token_i;
-            get_goto( after_token_i, *dfa_it, g, i );
+            get_goto( after_token_i, dfa_it->atoms(), g, i );
             if( !after_token_i.empty() )
             {
-                std::pair<dfa::iterator,bool> out = my_dfa.insert( after_token_i );
+                labelled_atom_set here(count+1,after_token_i);
+                std::pair<dfa::iterator,bool> out = my_dfa.insert( here );
                 if( out.second ) {
                     dfa_it = my_dfa.begin();
+                    ++count;
                 }
+                std::cout << "go from " << dfa_it->label() << " to " << out.first->label() << " on " << token_names[i] << std::endl;
             }
         }
     }
@@ -200,7 +200,7 @@ int main()
     for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
     {
         std::cout << "state:" << std::endl;
-        for( atom_set::iterator it = dfa_it->begin(); it != dfa_it->end(); ++it ) { std::cout << *it << std::endl; }
+        for( atom_set::iterator it = dfa_it->atoms().begin(); it != dfa_it->atoms().end(); ++it ) { std::cout << *it << std::endl; }
         std::cout << std::endl;
     }
 }
