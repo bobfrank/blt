@@ -77,6 +77,23 @@ operator<(const Atom& lhs, const Atom& rhs)
     return lhs.compare(rhs);
 }
 
+class labelled_atom_set {
+public:
+    labelled_atom_set(int label, const atom_set& atoms) : m_atoms(atoms), m_label(label) {}
+    int label() const { return m_label; }
+    const atom_set& atoms() const { return m_atoms; }
+private:
+    int m_label;
+    atom_set m_atoms;
+};
+bool
+operator<(const labelled_atom_set& lhs,
+          const labelled_atom_set& rhs)
+{
+    return lhs.atoms() < rhs.atoms();
+}
+typedef std::set<labelled_atom_set> dfa;
+
 
 // a lot of this is from https://www.l2f.inesc-id.pt/~david/wiki/pt/index.php/Bottom-Up_Parsing
 void get_closure(
@@ -133,7 +150,9 @@ void get_goto( atom_set&        out,
     get_closure(out, g);
 }
 
-void build_dfa()
+void build_dfa( dfa&  my_dfa,
+                const grammar& g,
+                token first_token )
 {
     // Building the DFA
     // The DFA (a set of sets) starts by containing a single element, consisting of the set
@@ -142,45 +161,19 @@ void build_dfa()
     // Then, repeat until it is not possible to add any further elements: for each element
     //     (set) I in the DFA and for each grammar symbol X, add goto(I,X) (if not empty) to the DFA.
 
-
-}
-
-class labelled_atom_set {
-public:
-    labelled_atom_set(int label, const atom_set& atoms) : m_atoms(atoms), m_label(label) {}
-    int label() const { return m_label; }
-    const atom_set& atoms() const { return m_atoms; }
-private:
-    int m_label;
-    atom_set m_atoms;
-};
-bool
-operator<(const labelled_atom_set& lhs,
-          const labelled_atom_set& rhs)
-{
-    return lhs.atoms() < rhs.atoms();
-}
-typedef std::set<labelled_atom_set> dfa;
-
-int main()
-{
-    grammar g = {
-        {p_exp,     {p_exp,PLUS,p_times}},
-        {p_exp,     {p_times}},
-        {p_times,   {p_times,TIMES,p_fact}},
-        {p_times,   {p_fact}},
-        {p_fact,    {LPAREN,p_exp,RPAREN}},
-        {p_fact,    {ID}},
-    };
-
-    dfa my_dfa;
-
-    token_vector first = {p_exp};
+    token_vector first = {first_token};
     atom_set atoms = {Atom(p_S, first, 0)};
     get_closure(atoms, g);
     labelled_atom_set first_label(0,atoms);
     my_dfa.insert( first_label );
     int count = 0;
+    std::cout << "digraph finite_state_machine {" << std::endl
+              << "    rankdir=LR;" << std::endl
+              << "    size=\"8,5\";" << std::endl
+              << "    node [shape = circle];" << std::endl;
+    typedef std::pair<int,std::pair<int,int> > link;
+    typedef std::set<link> links;
+    links mylinks;
     for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
     {
         for( int i = 0; i < 9; ++i ) {
@@ -191,18 +184,57 @@ int main()
                 labelled_atom_set here(count+1,after_token_i);
                 std::pair<dfa::iterator,bool> out = my_dfa.insert( here );
                 if( out.second ) {
+                    std::cout << "    LR_" << here.label() << " [label=\"";
+                    for( atom_set::iterator it = here.atoms().begin(); it != here.atoms().end(); ++it ) { std::cout << *it << "\\n"; }
+                    std::cout << "\"];" << std::endl;
                     dfa_it = my_dfa.begin();
                     ++count;
                 }
-                std::cout << "go from " << dfa_it->label() << " to " << out.first->label() << " on " << token_names[i] << std::endl;
+                std::pair<links::iterator,bool> sout = mylinks.insert( std::make_pair(dfa_it->label(),std::make_pair(out.first->label(),i)) );
+                if( sout.second)
+                std::cout << "    LR_" << dfa_it->label() << " -> LR_" << out.first->label()
+                          << " [ label=\"" << token_names[i] << "\" ];" << std::endl;
+                //std::cout << "go from " << dfa_it->label() << " to " << out.first->label() << " on " << token_names[i] << std::endl;
             }
         }
     }
-
-    for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
-    {
-        std::cout << "state:" << std::endl;
-        for( atom_set::iterator it = dfa_it->atoms().begin(); it != dfa_it->atoms().end(); ++it ) { std::cout << *it << std::endl; }
-        std::cout << std::endl;
-    }
+    std::cout << "}" << std::endl;
+}
+// The Parse Table
+// 
+// The SLR(1) parse table is built, as mentioned above, based on the transitions of the DFA and on the FOLLOWs associated with reduced non-terminals (in each state where reductions occur -- the dot is at the end of the LR(0) item, meaning that all of its components have been either seen or reduced and they are available on the parser's stack).
+// 
+// The parse table has two zones, that associate states and symbols: action (shifts, reduces, accept), defined over states and terminal symbols (as well as with the end of phrase); and goto (defined over states and non-terminal symbols; associated with transitions after reducing non-terminals).
+// 
+// Assuming that the DFA has been built and, thus, the I0 ... In states are known, the following steps produce the parse table:
+// 
+//    1. State i is corresponds to Ii; the corresponding actions are:
+//           * If [A->α•aβ] (a is a terminal) is in Ii and goto(Ii,a) = Ij, then define action[i,a] = shift j
+//           * If [A->α•] is in Ii, then define action[i,a] = reduce A->α for all α ∈ FOLLOW(A) (A≠S', S' being the start symbol)
+//           * If [S'->S•$] (S' being the start symbol) is in Ii, then define action[i,$] = ACCEPT 
+//    2. For state i and A a non-terminal symbol, define goto(i,A) = j if goto(Ii, A) = Ij 
+// 
+// All cells left empty correspond to syntax errors.
+// 
+// If step 1 above produces cells with multiple values, then the grammar is said not to be SLR(1) (in general, a grammar is said to be SLR(1) if an SLR(1) parser can be built).
+// 
+// [TO BE CONTINUED...] 
+int main()
+{
+    grammar g = {
+        {p_exp,     {p_exp,PLUS,p_times}},
+        {p_exp,     {p_times}},
+        {p_times,   {p_times,TIMES,p_fact}},
+        {p_times,   {p_fact}},
+        {p_fact,    {LPAREN,p_exp,RPAREN}},
+        {p_fact,    {ID}},
+    };
+    dfa my_dfa;
+    build_dfa( my_dfa, g, p_exp );
+//     for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
+//     {
+//         std::cout << "state:" << std::endl;
+//         for( atom_set::iterator it = dfa_it->atoms().begin(); it != dfa_it->atoms().end(); ++it ) { std::cout << *it << std::endl; }
+//         std::cout << std::endl;
+//     }
 }
