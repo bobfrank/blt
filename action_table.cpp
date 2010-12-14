@@ -77,6 +77,8 @@ operator<(const Atom& lhs, const Atom& rhs)
     return lhs.compare(rhs);
 }
 
+
+// a lot of this is from https://www.l2f.inesc-id.pt/~david/wiki/pt/index.php/Bottom-Up_Parsing
 void get_closure(
         atom_set&       atoms,
         const grammar&  g )
