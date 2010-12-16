@@ -180,6 +180,7 @@ void get_closure(
                     std::pair<atom_set::iterator,bool> out = atoms.insert( Atom(g_it->first, g_it->second, 0) );
                     if( out.second ) {
                         changed = true;
+                        a_it = out.first;
                         break;
                     }
                 }
@@ -234,32 +235,43 @@ void build_dfa( dfa&  my_dfa,
     int count = 0;
     std::cout << "digraph finite_state_machine {" << std::endl
               << "    rankdir=LR;" << std::endl
-              << "    size=\"8,5\";" << std::endl
+              //<< "    size=\"67,40\";" << std::endl
+              << "    graph [fontsize=4];" << std::endl
+              << "    edge  [fontsize=4];" << std::endl
+              << "    node  [fontsize=4];" << std::endl
               << "    node [shape = rect];" << std::endl;
     typedef std::pair<int,std::pair<int,int> > link;
     typedef std::set<link> links;
     links mylinks;
-    for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
+    bool changed = true;
+    while( changed )
     {
-        for( int i = 0; i < TOKEN_COUNT; ++i ) {
-            atom_set after_token_i;
-            get_goto( after_token_i, dfa_it->atoms(), g, i );
-            if( !after_token_i.empty() )
-            {
-                labelled_atom_set here(count+1,after_token_i);
-                std::pair<dfa::iterator,bool> out = my_dfa.insert( here );
-                if( out.second ) {
-                    std::cout << "    LR_" << here.label() << " [label=\"";
-                    for( atom_set::iterator it = here.atoms().begin(); it != here.atoms().end(); ++it ) { std::cout << *it << "\\l"; }
-                    std::cout << "\"];" << std::endl;
-                    dfa_it = my_dfa.begin();
-                    ++count;
+        changed=false;
+        for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
+        {
+            for( int i = 0; i < TOKEN_COUNT; ++i ) {
+                atom_set after_token_i;
+                get_goto( after_token_i, dfa_it->atoms(), g, i );
+                if( !after_token_i.empty() )
+                {
+                    labelled_atom_set here(count+1,after_token_i);
+                    std::pair<dfa::iterator,bool> out = my_dfa.insert( here );
+                    if( out.second ) {
+                        std::cout << "    LR_" << here.label() << " [label=\"";
+                        for( atom_set::iterator it = here.atoms().begin(); it != here.atoms().end(); ++it ) { std::cout << *it << "\\l"; }
+                        std::cout << "\"];" << std::endl;
+                        //dfa_it = my_dfa.begin();
+                        dfa_it = out.first;
+                        changed = true;
+                        ++count;
+                        break;
+                    }
+                    std::pair<links::iterator,bool> sout = mylinks.insert( std::make_pair(dfa_it->label(),std::make_pair(out.first->label(),i)) );
+                    if( sout.second)
+                    std::cout << "    LR_" << dfa_it->label() << " -> LR_" << out.first->label()
+                            << " [ label=\"" << token_names[i] << "\" ];" << std::endl;
+                    //std::cout << "go from " << dfa_it->label() << " to " << out.first->label() << " on " << token_names[i] << std::endl;
                 }
-                std::pair<links::iterator,bool> sout = mylinks.insert( std::make_pair(dfa_it->label(),std::make_pair(out.first->label(),i)) );
-                if( sout.second)
-                std::cout << "    LR_" << dfa_it->label() << " -> LR_" << out.first->label()
-                          << " [ label=\"" << token_names[i] << "\" ];" << std::endl;
-                //std::cout << "go from " << dfa_it->label() << " to " << out.first->label() << " on " << token_names[i] << std::endl;
             }
         }
     }
