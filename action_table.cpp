@@ -6,8 +6,66 @@
 typedef int token;
 typedef std::vector<token> token_vector;
 typedef std::unordered_multimap<token,token_vector> grammar;
-typedef enum {PLUS,TIMES,LPAREN,RPAREN,ID,DOT,p_exp,p_times,p_fact,p_S,TOKEN_COUNT} Token;
-const char*token_names[] = {"PLUS","TIMES","LPAREN","RPAREN","ID","DOT","p_exp","p_times","p_fact","p_S"};
+typedef enum {
+    EXTERN,CONST,CLASS,TEMPLATE,OPERATOR,
+    ELIF,ELSE,IF,CHAR,CHAR16,FLOAT32,
+    FLOAT64,FLOAT128,INT128,INT64,INT32,
+    INT16,INT8, UINT128,UINT64,UINT32,
+    UINT16, UINT8,WORD,HWORD, DWORD,
+    IMPORT,WITH, AS,TYPEDEF, ASSIGNOPER,
+    LTE,GTE,NE,LOGNOT,LOGOR,LOGAND,
+    BITNOT,BITAND,BITOR,BITXOR,BITLEFT,
+    BITRIGHT,MOD,INCREMENT,DECREMENT,
+    QUESTION, EQ, SUBSCRIPT, MEMBERPTR,
+    ID,POINTS,
+    PLUS,MINUS,TIMES,DIVIDE,EQUALS,
+    LPAREN,RPAREN, SCOPE,OPEN,
+    CLOSE, DOT, COMMA, EXTERNCODE,
+    COLON, SEMICOLON,
+    LBRACKET,RBRACKET, GT, LT,
+    INTCONST, FLOATCONST, STRINGCONST,
+    p_arg, p_argret,p_args,p_assignment,p_bareif,
+    p_basictype,p_block,p_blocks,p_callarg,p_callargs,
+    p_callargsa,p_class,p_cmpop,p_code,
+    p_compare,p_constant,p_construct,p_ctype,p_data,
+    p_deftype,p_dname,p_elif,p_elifs,p_else,p_elses,
+    p_etype,p_fnname,p_funcall,p_function,p_fundec,
+    p_fundecs,p_ifstatement,p_import,p_oblock,p_operator,
+    p_overloadable,p_ptype,p_rtype,p_segment,p_tclass,
+    p_templargspec,p_templargspecs,p_templatearg,
+    p_templateargs,p_S,
+    TOKEN_COUNT
+} Token;
+
+const char* token_names[] = {
+    "EXTERN","CONST","CLASS","TEMPLATE","OPERATOR",
+    "ELIF","ELSE","IF","CHAR","CHAR16","FLOAT32",
+    "FLOAT64","FLOAT128","INT128","INT64","INT32",
+    "INT16","INT8", "UINT128","UINT64","UINT32",
+    "UINT16", "UINT8","WORD","HWORD", "DWORD",
+    "IMPORT","WITH", "AS","TYPEDEF", "ASSIGNOPER",
+    "LTE","GTE","NE","LOGNOT","LOGOR","LOGAND",
+    "BITNOT","BITAND","BITOR","BITXOR","BITLEFT",
+    "BITRIGHT","MOD","INCREMENT","DECREMENT",
+    "QUESTION", "EQ", "SUBSCRIPT", "MEMBERPTR",
+    "ID","POINTS",
+    "PLUS","MINUS","TIMES","DIVIDE","EQUALS",
+    "LPAREN","RPAREN", "SCOPE","OPEN",
+    "CLOSE", "DOT", "COMMA", "EXTERNCODE",
+    "COLON", "SEMICOLON",
+    "LBRACKET","RBRACKET", "GT", "LT",
+    "INTCONST", "FLOATCONST", "STRINGCONST",
+    "p_arg"," p_argret","p_args","p_assignment","p_bareif",
+    "p_basictype","p_block","p_blocks","p_callarg","p_callargs",
+    "p_callargsa","p_class","p_cmpop","p_code",
+    "p_compare","p_constant","p_construct","p_ctype","p_data",
+    "p_deftype","p_dname","p_elif","p_elifs","p_else","p_elses",
+    "p_etype","p_fnname","p_funcall","p_function","p_fundec",
+    "p_fundecs","p_ifstatement","p_import","p_oblock","p_operator",
+    "p_overloadable","p_ptype","p_rtype","p_segment","p_tclass",
+    "p_templargspec","p_templargspecs","p_templatearg",
+    "p_templateargs", "p_S'"
+};
 
 class Atom {
 public:
@@ -170,13 +228,13 @@ void build_dfa( dfa&  my_dfa,
     std::cout << "digraph finite_state_machine {" << std::endl
               << "    rankdir=LR;" << std::endl
               << "    size=\"8,5\";" << std::endl
-              << "    node [shape = circle];" << std::endl;
+              << "    node [shape = rect];" << std::endl;
     typedef std::pair<int,std::pair<int,int> > link;
     typedef std::set<link> links;
     links mylinks;
     for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
     {
-        for( int i = 0; i < 9; ++i ) {
+        for( int i = 0; i < TOKEN_COUNT; ++i ) {
             atom_set after_token_i;
             get_goto( after_token_i, dfa_it->atoms(), g, i );
             if( !after_token_i.empty() )
@@ -185,7 +243,7 @@ void build_dfa( dfa&  my_dfa,
                 std::pair<dfa::iterator,bool> out = my_dfa.insert( here );
                 if( out.second ) {
                     std::cout << "    LR_" << here.label() << " [label=\"";
-                    for( atom_set::iterator it = here.atoms().begin(); it != here.atoms().end(); ++it ) { std::cout << *it << "\\n"; }
+                    for( atom_set::iterator it = here.atoms().begin(); it != here.atoms().end(); ++it ) { std::cout << *it << "\\l"; }
                     std::cout << "\"];" << std::endl;
                     dfa_it = my_dfa.begin();
                     ++count;
@@ -218,19 +276,155 @@ void build_dfa( dfa&  my_dfa,
 // 
 // If step 1 above produces cells with multiple values, then the grammar is said not to be SLR(1) (in general, a grammar is said to be SLR(1) if an SLR(1) parser can be built).
 // 
-// [TO BE CONTINUED...] 
+// [TO BE CONTINUED...]
 int main()
 {
     grammar g = {
-        {p_exp,     {p_exp,PLUS,p_times}},
-        {p_exp,     {p_times}},
-        {p_times,   {p_times,TIMES,p_fact}},
-        {p_times,   {p_fact}},
-        {p_fact,    {LPAREN,p_exp,RPAREN}},
-        {p_fact,    {ID}},
+        {p_code,            {p_segment}},
+        {p_code,            {p_code,p_segment}},
+        {p_segment,         {p_function}},
+        {p_segment,         {p_tclass}},
+        {p_segment,         {p_import,SEMICOLON}},
+        {p_segment,         {p_deftype,SEMICOLON}},
+        {p_import,          {IMPORT,STRINGCONST,WITH,STRINGCONST,AS,ID}},
+        {p_import,          {p_dname}},
+        {p_overloadable,    {EQUALS}},
+        {p_overloadable,    {PLUS}},
+        {p_overloadable,    {MINUS}},
+        {p_overloadable,    {TIMES}},
+        {p_overloadable,    {DIVIDE}},
+        {p_overloadable,    {MOD}},
+        {p_overloadable,    {INCREMENT}},
+        {p_overloadable,    {DECREMENT}},
+        {p_overloadable,    {EQ}},
+        {p_overloadable,    {NE}},
+        {p_overloadable,    {GT}},
+        {p_overloadable,    {LT}},
+        {p_overloadable,    {GTE}},
+        {p_overloadable,    {LTE}},
+        {p_overloadable,    {LOGNOT}},
+        {p_overloadable,    {LOGAND}},
+        {p_overloadable,    {LOGOR}},
+        {p_overloadable,    {BITNOT}},
+        {p_overloadable,    {BITAND}},
+        {p_overloadable,    {BITOR}},
+        {p_overloadable,    {BITXOR}},
+        {p_overloadable,    {BITLEFT}},
+        {p_overloadable,    {BITRIGHT}},
+        {p_overloadable,    {ASSIGNOPER}},
+        {p_overloadable,    {SUBSCRIPT}},
+        {p_overloadable,    {MEMBERPTR}},
+        {p_overloadable,    {LPAREN,RPAREN}},
+        {p_operator,        {OPERATOR,p_overloadable}},
+        {p_templatearg,     {ID, EQUALS, ID}},
+        {p_templatearg,     {ID, EQUALS, p_constant}},
+        {p_templateargs,    {p_templatearg}},
+        {p_templateargs,    {p_templateargs, p_templatearg}},
+        {p_templargspec,    {ID, ID, EQUALS, ID}}, // first id must be typename
+        {p_templargspec,    {ID, ID, EQUALS, p_constant}}, // first id must be in [int,float,string]
+        {p_templargspec,    {ID, ID}}, // first id must be in [int,float,string,typename]
+        {p_templargspecs,   {p_templargspec}},
+        {p_templargspecs,   {p_templargspecs,p_templargspec}},
+        {p_dname,           {ID}},
+        {p_dname,           {p_dname,DOT,ID}},
+        {p_basictype,       {CHAR}},
+        {p_basictype,       {CHAR16}},
+        {p_basictype,       {INT128}},
+        {p_basictype,       {INT64}},
+        {p_basictype,       {INT32}},
+        {p_basictype,       {INT16}},
+        {p_basictype,       {INT8}},
+        {p_basictype,       {UINT128}},
+        {p_basictype,       {UINT64}},
+        {p_basictype,       {UINT32}},
+        {p_basictype,       {UINT16}},
+        {p_basictype,       {UINT8}},
+        {p_basictype,       {WORD}},
+        {p_basictype,       {HWORD}},
+        {p_basictype,       {DWORD}},
+        {p_basictype,       {FLOAT32}},
+        {p_basictype,       {FLOAT64}},
+        {p_basictype,       {FLOAT128}},
+        {p_etype,           {p_dname}},
+        {p_etype,           {p_basictype}},
+        {p_rtype,           {p_etype}},
+        {p_rtype,           {p_etype,BITAND}},
+        {p_ptype,           {p_rtype}},
+        {p_ptype,           {p_rtype,TIMES}},
+        {p_ctype,           {p_ptype}},
+        {p_ctype,           {CONST,p_ptype}}, //TODO make this like c++ const
+        {p_deftype,         {TYPEDEF, p_ctype, ID}},
+        {p_deftype,         {TYPEDEF, p_dname, LT, p_templateargs, GT, ID}},
+        {p_constant,        {INTCONST}},
+        {p_constant,        {FLOATCONST}},
+        {p_constant,        {STRINGCONST}},
+        {p_data,            {p_constant}},
+        {p_data,            {CONST, LBRACKET, ID, RBRACKET}},
+        {p_data,            {p_dname}},
+        {p_data,            {BITAND,p_dname}},
+        {p_data,            {TIMES,p_dname}},
+        {p_data,            {p_funcall}},
+        {p_arg,             {p_ctype, ID}},
+        {p_arg,             {p_ctype, ID, EQUALS, p_data}},
+        {p_args,            {p_arg}},
+        {p_args,            {p_args,COMMA,p_arg}},
+        {p_callarg,         {ID,EQUALS,p_data}},
+        {p_callargsa,       {p_callarg}},
+        {p_callargsa,       {p_callargsa,COMMA,p_callarg}},
+        {p_callargs,        {p_callargsa}},
+        {p_callargs,        {p_data}},
+        {p_cmpop,           {EQ}},
+        {p_cmpop,           {LTE}},
+        {p_cmpop,           {GTE}},
+        {p_cmpop,           {NE}},
+        {p_cmpop,           {GT}},
+        {p_cmpop,           {LT}},
+        {p_compare,         {p_data,p_cmpop,p_data}},
+        {p_bareif,          {IF,LPAREN,p_compare,RPAREN,p_block}},
+        {p_elif,            {ELIF,LPAREN,p_compare,RPAREN,p_block}},
+        {p_else,            {ELSE,p_block}},
+        {p_elifs,           {p_elif}},
+        {p_elifs,           {p_elifs,p_elif}},
+        {p_elses,           {p_elifs,p_else}},
+        {p_elses,           {p_else}},
+        {p_ifstatement,     {p_bareif}},
+        {p_ifstatement,     {p_bareif,p_elses}},
+        {p_assignment,      {p_dname,ASSIGNOPER,p_data}},
+        {p_assignment,      {p_dname,EQUALS,p_data}},
+        {p_construct,       {p_ctype,ID,EQUALS,p_data}},
+        {p_construct,       {p_ctype,ID,LPAREN,p_callargs,RPAREN}},
+        {p_funcall,         {p_dname,LPAREN,p_callargs,RPAREN}},
+        {p_funcall,         {p_dname,LPAREN,RPAREN}},
+        {p_oblock,          {p_ifstatement}},
+        {p_oblock,          {p_funcall,SEMICOLON}},
+        {p_oblock,          {p_assignment,SEMICOLON}},
+        {p_oblock,          {p_construct,SEMICOLON}},
+        {p_oblock,          {p_block}},
+        {p_blocks,          {p_oblock}},
+        {p_blocks,          {p_blocks,p_oblock}},
+        {p_block,           {OPEN,CLOSE}},  // TODO do I really want this to be valid?
+        {p_block,           {OPEN,p_blocks,CLOSE}},
+        {p_argret,          {}},
+        {p_argret,          {LPAREN,p_args,RPAREN}},
+        {p_argret,          {LPAREN,p_args,RPAREN,POINTS,LPAREN,p_args,RPAREN}},
+        {p_argret,          {POINTS,LPAREN,p_args,RPAREN}},
+        {p_fnname,          {ID}},
+        {p_fnname,          {p_operator}},
+        {p_fnname,          {ID,SCOPE,ID}},
+        {p_function,        {p_fnname,p_argret,p_block}},
+        {p_function,        {SCOPE,p_fnname,p_argret,p_block}},
+        {p_function,        {p_fnname,p_argret,COLON,p_callargs,p_block}},
+        {p_function,        {p_fnname,p_argret,EQUALS,EXTERN,STRINGCONST,p_argret,EXTERNCODE,SEMICOLON}},
+        {p_fundec,          {p_fnname,p_argret}},
+        {p_fundec,          {p_deftype}},
+        {p_fundecs,         {p_fundec,SEMICOLON}},
+        {p_fundecs,         {p_fundecs,p_fundec,SEMICOLON}},
+        {p_class,           {CLASS,ID,OPEN,p_fundecs,CLOSE}},
+        {p_tclass,          {TEMPLATE,LT,p_templargspecs,GT,p_class}},
+        {p_tclass,          {p_class}}
     };
     dfa my_dfa;
-    build_dfa( my_dfa, g, p_exp );
+    build_dfa( my_dfa, g, p_code );
 //     for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
 //     {
 //         std::cout << "state:" << std::endl;
