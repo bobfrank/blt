@@ -164,20 +164,24 @@ void get_closure(
     //1. Initially, all elements of I are in ε-closure(I)
     //2. If A->α•Bβ is in ε-closure(I) and B->γ is a production, the add B->•γ to ε-closure(I) 
     //
-    //(repeat until the ε-closure(I) is unchanged) 
-    for( atom_set::const_iterator a_it = atoms.begin();
-            a_it != atoms.end(); ++a_it )
-    {
-        if( a_it->point_location() < a_it->tokens().size() )
+    //(repeat until the ε-closure(I) is unchanged)
+    bool changed = true;
+    while( changed ) {
+        changed = false;
+        for( atom_set::const_iterator a_it = atoms.begin();
+                a_it != atoms.end(); ++a_it )
         {
-            token B = a_it->tokens()[a_it->point_location()];
-            for( grammar::const_iterator g_it = g.find(B);
-                g_it != g.end() && g_it->first == B; ++g_it )
+            if( a_it->point_location() < a_it->tokens().size() )
             {
-                std::pair<atom_set::iterator,bool> out = atoms.insert( Atom(g_it->first, g_it->second, 0) );
-                if( out.second ) {
-                    a_it = atoms.begin();
-                    --a_it;
+                token B = a_it->tokens()[a_it->point_location()];
+                for( grammar::const_iterator g_it = g.find(B);
+                    g_it != g.end() && g_it->first == B; ++g_it )
+                {
+                    std::pair<atom_set::iterator,bool> out = atoms.insert( Atom(g_it->first, g_it->second, 0) );
+                    if( out.second ) {
+                        changed = true;
+                        break;
+                    }
                 }
             }
         }
@@ -222,6 +226,9 @@ void build_dfa( dfa&  my_dfa,
     token_vector first = {first_token};
     atom_set atoms = {Atom(p_S, first, 0)};
     get_closure(atoms, g);
+    //std::cout << "printing first closure:" << std::endl;
+    //for( atom_set::iterator it = atoms.begin(); it != atoms.end(); ++it ) { std::cout << *it << std::endl; }
+    //std::cout << std::endl;
     labelled_atom_set first_label(0,atoms);
     my_dfa.insert( first_label );
     int count = 0;
