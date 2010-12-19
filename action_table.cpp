@@ -1,4 +1,5 @@
 #include <unordered_map>
+#include <regex>
 #include <set>
 #include <vector>
 #include <iostream>
@@ -34,6 +35,7 @@ typedef enum {
     p_overloadable,p_ptype,p_rtype,p_segment,p_tclass,
     p_templargspec,p_templargspecs,p_templatearg,
     p_templateargs,p_S,
+    FINISHED,//shown as $ in a lot of algorithms
     TOKEN_COUNT
 } Token;
 
@@ -64,7 +66,7 @@ const char* token_names[] = {
     "p_fundecs","p_ifstatement","p_import","p_oblock","p_operator",
     "p_overloadable","p_ptype","p_rtype","p_segment","p_tclass",
     "p_templargspec","p_templargspecs","p_templatearg",
-    "p_templateargs", "p_S'"
+    "p_templateargs", "p_S'", "$"
 };
 
 class Atom {
@@ -77,7 +79,7 @@ public:
     void print( std::ostream& os ) const;
     bool compare( const Atom& rhs ) const;
 private:
-    const token_vector& m_tokens;
+    const token_vector  m_tokens;
     token               m_t;
     int                 m_point_location;
 };
@@ -141,7 +143,7 @@ public:
     int label() const { return m_label; }
     const atom_set& atoms() const { return m_atoms; }
 private:
-    int m_label;
+    int      m_label;
     atom_set m_atoms;
 };
 bool
@@ -150,23 +152,25 @@ operator<(const labelled_atom_set& lhs,
 {
     return lhs.atoms() < rhs.atoms();
 }
-typedef std::set<labelled_atom_set> dfa;
-
+typedef std::set<labelled_atom_set>         dfa;
+typedef std::pair<int,std::pair<int,int> >  alink;
+typedef std::set<alink>                     links;
 
 // a lot of this is from https://www.l2f.inesc-id.pt/~david/wiki/pt/index.php/Bottom-Up_Parsing
 void get_closure(
         atom_set&       atoms,
         const grammar&  g )
 {
-    
     //Consider I a set of LR(0) items. The following conditions apply to rules in ε-closure(I):
     //
     //1. Initially, all elements of I are in ε-closure(I)
     //2. If A->α•Bβ is in ε-closure(I) and B->γ is a production, the add B->•γ to ε-closure(I) 
     //
     //(repeat until the ε-closure(I) is unchanged)
+
     bool changed = true;
-    while( changed ) {
+    while( changed )
+    {
         changed = false;
         for( atom_set::const_iterator a_it = atoms.begin();
                 a_it != atoms.end(); ++a_it )
@@ -180,7 +184,7 @@ void get_closure(
                     std::pair<atom_set::iterator,bool> out = atoms.insert( Atom(g_it->first, g_it->second, 0) );
                     if( out.second ) {
                         changed = true;
-                        a_it = out.first;
+                        a_it    = atoms.end();
                         break;
                     }
                 }
@@ -213,7 +217,8 @@ void get_goto( atom_set&        out,
     get_closure(out, g);
 }
 
-void build_dfa( dfa&  my_dfa,
+void build_dfa( dfa&   my_dfa,
+                links& dfa_links,
                 const grammar& g,
                 token first_token )
 {
@@ -227,22 +232,10 @@ void build_dfa( dfa&  my_dfa,
     token_vector first = {first_token};
     atom_set atoms = {Atom(p_S, first, 0)};
     get_closure(atoms, g);
-    //std::cout << "printing first closure:" << std::endl;
-    //for( atom_set::iterator it = atoms.begin(); it != atoms.end(); ++it ) { std::cout << *it << std::endl; }
-    //std::cout << std::endl;
     labelled_atom_set first_label(0,atoms);
     my_dfa.insert( first_label );
     int count = 0;
-    std::cout << "digraph finite_state_machine {" << std::endl
-              << "    rankdir=LR;" << std::endl
-              //<< "    size=\"67,40\";" << std::endl
-              << "    graph [fontsize=4];" << std::endl
-              << "    edge  [fontsize=4];" << std::endl
-              << "    node  [fontsize=4];" << std::endl
-              << "    node [shape = rect];" << std::endl;
-    typedef std::pair<int,std::pair<int,int> > link;
-    typedef std::set<link> links;
-    links mylinks;
+
     bool changed = true;
     while( changed )
     {
@@ -257,45 +250,175 @@ void build_dfa( dfa&  my_dfa,
                     labelled_atom_set here(count+1,after_token_i);
                     std::pair<dfa::iterator,bool> out = my_dfa.insert( here );
                     if( out.second ) {
-                        std::cout << "    LR_" << here.label() << " [label=\"";
-                        for( atom_set::iterator it = here.atoms().begin(); it != here.atoms().end(); ++it ) { std::cout << *it << "\\l"; }
-                        std::cout << "\"];" << std::endl;
-                        //dfa_it = my_dfa.begin();
-                        dfa_it = out.first;
+                        dfa_it  = my_dfa.end();
                         changed = true;
                         ++count;
                         break;
                     }
-                    std::pair<links::iterator,bool> sout = mylinks.insert( std::make_pair(dfa_it->label(),std::make_pair(out.first->label(),i)) );
-                    if( sout.second)
-                    std::cout << "    LR_" << dfa_it->label() << " -> LR_" << out.first->label()
-                            << " [ label=\"" << token_names[i] << "\" ];" << std::endl;
-                    //std::cout << "go from " << dfa_it->label() << " to " << out.first->label() << " on " << token_names[i] << std::endl;
+                    dfa_links.insert( std::make_pair(dfa_it->label(),std::make_pair(out.first->label(),i)) );
                 }
             }
         }
     }
-    std::cout << "}" << std::endl;
 }
-// The Parse Table
+
+void
+print_dfa( std::ostream& os, const dfa& my_dfa, const links& dfa_links )
+{
+    os << "digraph finite_state_machine {" << std::endl
+       << "    rankdir=LR;" << std::endl
+       //<< "    size=\"67,40\";" << std::endl
+       << "    graph [fontsize=6];" << std::endl
+       << "    edge  [fontsize=6];" << std::endl
+       << "    node  [fontsize=6];" << std::endl
+       << "    node [shape = rect];" << std::endl;
+    for( dfa::const_iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
+    {
+        os << "    LR_" << dfa_it->label() << " [label=\"";
+        for( atom_set::iterator atom_it = dfa_it->atoms().begin(); atom_it != dfa_it->atoms().end(); ++atom_it ) { os << *atom_it << "\\l"; }
+        os << "\"];" << std::endl;
+    }
+    for( links::const_iterator links_it = dfa_links.begin(); links_it != dfa_links.end(); ++links_it )
+    {
+        const int from     = links_it->first;
+        const int to       = links_it->second.first;
+        const int token_id = links_it->second.second;
+        os << "    LR_" << from << " -> LR_" << to
+           << " [ label=\"" << token_names[token_id] << "\" ];" << std::endl;
+    }
+    os << "}" << std::endl;
+}
+
+typedef enum {SHIFT, REDUCE} sor;
+struct action {
+    sor act;
+    int tok;
+};
+
+typedef std::unordered_map< int, std::unordered_map<int, action> > action_table;
+typedef action_table goto_table;
+void
+build_parse_table( goto_table&      gotos,
+                   action_table&    actions,
+                   const dfa&       my_dfa,
+                   const links&     my_links )
+{
+    // Assuming that the DFA has been built and, thus, the I0 ... In states are known, the following steps produce the parse table:
+    // 
+    //    1. State i is corresponds to Ii; the corresponding actions are:
+    //           * If [A->α•aβ] (a is a terminal) is in Ii and goto(Ii,a) = Ij, then define action[i,a] = shift j
+    //           * If [A->α•] is in Ii, then define action[i,a] = reduce A->α for all α ∈ FOLLOW(A) (A≠S', S' being the start symbol)
+    //           * If [S'->S•$] (S' being the start symbol) is in Ii, then define action[i,$] = ACCEPT 
+    //    2. For state i and A a non-terminal symbol, define goto(i,A) = j if goto(Ii, A) = Ij 
+    // 
+    // All cells left empty correspond to syntax errors.
+    // 
+    // If step 1 above produces cells with multiple values, then the grammar is said not to be SLR(1) (in general, a grammar is
+    //      said to be SLR(1) if an SLR(1) parser can be built).
+
+    typedef std::unordered_map<int, std::vector<int> > terminal_atomsets;
+    terminal_atomsets terminals;
+
+    for(dfa::const_iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it)
+    {
+        for(atom_set::const_iterator atom_it = dfa_it->atoms().begin(); atom_it != dfa_it->atoms().end(); ++atom_it)
+        {
+            if(atom_it->point_location() == atom_it->tokens().size()) {
+                terminals[dfa_it->label()].push_back(  )
+            }
+        }
+    }
+
+    for(links::const_iterator links_it = my_links.begin(); links_it != my_links.end(); ++links_it)
+    {
+    }
+}
+
+
+// In order to fill the parsing table, we have to establish what grammar rule the parser should choose if it sees
+//  a nonterminal A on the top of its stack and a symbol a on its input stream. It is easy to see that such a rule
+//  should be of the form A → w and that the language corresponding to w should have at least one string starting
+//  with a. For this purpose we define the First-set of w, written here as Fi(w), as the set of terminals that can
+//  be found at the start of any string in w, plus ε if the empty string also belongs to w. Given a grammar with
+//  the rules A1 → w1, ..., An → wn, we can compute the Fi(wi) and Fi(Ai) for every rule as follows:
 // 
-// The SLR(1) parse table is built, as mentioned above, based on the transitions of the DFA and on the FOLLOWs associated with reduced non-terminals (in each state where reductions occur -- the dot is at the end of the LR(0) item, meaning that all of its components have been either seen or reduced and they are available on the parser's stack).
+//    1. initialize every Fi(wi) and Fi(Ai) with the empty set
+//    2. add Fi(wi) to Fi(wi) for every rule Ai → wi, where Fi is defined as follows:
+//           * Fi(a w' ) = { a } for every terminal a
+//           * Fi(A w' ) = Fi(A) for every nonterminal A with ε not in Fi(A)
+//           * Fi(A w' ) = Fi(A) \ { ε } ∪ Fi(w' ) for every nonterminal A with ε in Fi(A)
+//           * Fi(ε) = { ε } 
+//    3. add Fi(wi) to Fi(Ai) for every rule Ai → wi
+//    4. repeat the steps 2 and 3 until all Fi sets stay the same. 
 // 
-// The parse table has two zones, that associate states and symbols: action (shifts, reduces, accept), defined over states and terminal symbols (as well as with the end of phrase); and goto (defined over states and non-terminal symbols; associated with transitions after reducing non-terminals).
+// Unfortunately, the First-sets are not sufficient to compute the parsing table. This is because a right-hand side
+//  w of a rule might ultimately be rewritten to the empty string. So the parser should also use the a rule A → w
+//  if ε is in Fi(w) and it sees on the input stream a symbol that could follow A. Therefore we also need the
+//  Follow-set of A, written as Fo(A) here, which is defined as the set of terminals a such that there is a string
+//  of symbols αAaβ that can be derived from the start symbol. Computing the Follow-sets for the nonterminals in a
+//  grammar can be done as follows:
 // 
-// Assuming that the DFA has been built and, thus, the I0 ... In states are known, the following steps produce the parse table:
+//    1. initialize every Fo(Ai) with the empty set
+//    2. if there is a rule of the form Aj → wAiw' , then
+//           * if the terminal a is in Fi(w' ), then add a to Fo(Ai)
+//           * if ε is in Fi(w' ), then add Fo(Aj) to Fo(Ai) 
+//    3. repeat step 2 until all Fo sets stay the same. 
 // 
-//    1. State i is corresponds to Ii; the corresponding actions are:
-//           * If [A->α•aβ] (a is a terminal) is in Ii and goto(Ii,a) = Ij, then define action[i,a] = shift j
-//           * If [A->α•] is in Ii, then define action[i,a] = reduce A->α for all α ∈ FOLLOW(A) (A≠S', S' being the start symbol)
-//           * If [S'->S•$] (S' being the start symbol) is in Ii, then define action[i,$] = ACCEPT 
-//    2. For state i and A a non-terminal symbol, define goto(i,A) = j if goto(Ii, A) = Ij 
+// Now we can define exactly which rules will be contained where in the parsing table. If T[A, a] denotes the entry
+//  in the table for nonterminal A and terminal a, then
 // 
-// All cells left empty correspond to syntax errors.
+//     T[A,a] contains the rule A → w iff
 // 
-// If step 1 above produces cells with multiple values, then the grammar is said not to be SLR(1) (in general, a grammar is said to be SLR(1) if an SLR(1) parser can be built).
+//         a is in Fi(w) or 
+//         ε is in Fi(w) and a is in Fo(A). 
 // 
-// [TO BE CONTINUED...]
+// If the table contains at most one rule in every one of its cells, then the parser will always know which rule it
+//  has to use and can therefore parse strings without backtracking. It is in precisely this case that the grammar
+//  is called an LL(1) grammar. 
+
+
+
+
+
+// Constructing LR(1) parsing tables
+// 
+// An LR(1) item is a production with a marker together with a terminal, e.g., [S → a A • B e, c]. Intuitively, such an item indicates how much of a certain production we have seen already (a A), what we could expect next (B e), and a lookahead that agrees with what should follow in the input if we ever reduce by the production S → a A B e. By incorporating such lookahead information into the item concept, we can make wiser reduce decisions. The lookahead of an LR(1) item is used directly only when considering reduce actions (i.e., when the • marker is at the right end).
+// 
+// The core of an LR(1) item [S → a A • B e, c] is the LR(0) item S → a A • B e. Different LR(1) items may share the same core. For example, if we have two LR(1) items of the form
+// 
+//     * [A → α •, a] and
+//     * [B → α •, b],
+// 
+// we take advantage of the lookahead to decide which reduction to use. (The same setting would perhaps produce a reduce/reduce conflict in the SLR approach.)
+// [edit] Validity
+// 
+// The notion of validity changes. An item [A → β1 • β2, a] is valid for a viable prefix α β1 if there is a rightmost derivation that yields α A a w which in one step yields α β1β2 a w
+// [edit] Initial item
+// 
+// To get the parsing started, we begin with the initial item of
+// 
+//     [S’ → • S, $].
+// 
+// Here $ is a special character denoting the end of the string.
+// [edit] Closure
+// 
+// Closure is more refined. If [A → α • B β, a] belongs to the set of items, and B → γ is a production of the grammar, then we add the item [B → • γ, b] for all b in FIRST(β a).
+// [edit] Goto
+// 
+// Goto is the same. A state containing [A → α • X β, a] will move to a state containing [A → α X • β, a] with label X.
+// 
+// Every state has transitions according to Goto. for all
+// [edit] Shift actions
+// 
+// The shift actions are the same. If [A → α • b β, a] is in state Ik and Ik moves to state Im with label b, then we add the action
+// 
+//     action[k, b] = "shift m"
+// 
+// [edit] Reduce actions
+// 
+// The reduce actions are more refined than SLR . If [A→α •, a] is in state Ik, then we add the action: "Reduce A → α" to action[Ik, a]. Observe that we don’t use information from FOLLOW(A) anymore. The goto part of the table is as before.
+// [edit] 
+
 int main()
 {
     grammar g = {
@@ -443,11 +566,7 @@ int main()
         {p_tclass,          {p_class}}
     };
     dfa my_dfa;
-    build_dfa( my_dfa, g, p_code );
-//     for( dfa::iterator dfa_it = my_dfa.begin(); dfa_it != my_dfa.end(); ++dfa_it )
-//     {
-//         std::cout << "state:" << std::endl;
-//         for( atom_set::iterator it = dfa_it->atoms().begin(); it != dfa_it->atoms().end(); ++it ) { std::cout << *it << std::endl; }
-//         std::cout << std::endl;
-//     }
+    links my_links; //actually part of the dfa... probably will collapse to the same structure in the future
+    build_dfa( my_dfa, my_links, g, p_code );
+    print_dfa( std::cout, my_dfa, my_links );
 }
