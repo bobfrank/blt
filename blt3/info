@@ -20,7 +20,7 @@ $name wolud represent a variable name to be used for scoping in the event that i
 * -- pointers (and derefs)
 etc (pretty much the same as C)
 
-// start of a formal grammar
+// start of a formal grammar (trying to avoid left recursive parse trees so I can try to use recursive descent parser)
 macrodef = item macrodef
         | item
         | item + '...'

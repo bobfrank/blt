@@ -1,32 +1,31 @@
-// TODO convert this into blt3 code
 
 [](Vector v, int idx)
     return v.data[idx]
 push(Vector v, data)
-    //
-struct Tree(T)
-    Vector(Tree(T)*) children
+    // realloc, etc, etc
+struct Tree<T>
+    Vector(Tree<T>*) children
     T value
 
-construct(Tree& self, value)
+new(Tree& self, value)
     self.value = value
 
-destruct(Tree& self)
+del(Tree& self)
     for(node, self.children)
         delete node
 
-add_child(Tree(T)& node, const T& value)
-    child = new Tree(T)(value);
+add_child(Tree<T>& node, const T& value)
+    child = new Tree<T>(value);
     push(node.children, child)
     return child
 
 value(const Tree& node)
     return node.value
 
-parse(    Tree(Token)&          root,
+parse(    Tree<Token>&          root,
           int*                  new_offset,
           const Grammar&        G,
-          const Vector(Token)&  input,
+          const Vector<Token>&  input,
           int                   offset = 0 )
 
     G_iter = find(G, value(root))
