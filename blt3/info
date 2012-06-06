@@ -1,12 +1,9 @@
 reserved keywords
 
 struct
-import <-- maybe (may just be a macro which sets up calls for dlopen/dlsym/dlclose)
-init
+new
 del
 cast
-new
-delete
 
 symbols
 @ -- chunk of code to execute (only for macros)

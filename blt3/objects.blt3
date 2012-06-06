@@ -56,7 +56,7 @@ blt classes (v3.1)
 
 struct Name<T>(Base)
     T m_val
-init(Name<T>& self, const T& val)
+new(Name<T>& self, const T& val)
     self.m_val = val
 del(Name& self)
     pass

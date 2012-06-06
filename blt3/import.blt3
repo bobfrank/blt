@@ -5,12 +5,10 @@ import($modname,"C")
     `mov ax, %(dlobj)
     $modname.$fnname(...)
         `call dlsym(%(dlobj), %($fnname))
-        `call *ax (%(...))
+        `call *ax (%(...)) // TODO need to look up llvm call function format and need to decide on how to cast items in ... (and maybe return values)
 
 import($modname,"Python")
     import(libpython,"C")
     libpython.Py_Initialize() // if not already initialized
     $modname.$fnname(...) // would have to be a recursive definition to convert each of the different types into python types
         libpython.Py_Call($modname, ...)
-
-import($modname,"Fortran")
