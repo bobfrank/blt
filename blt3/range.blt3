@@ -1,0 +1,19 @@
+use()
+    for(a : Range(10))
+        print(a)
+
+struct Range
+    int top
+    int at
+Range(x)
+    y = Range()
+    y.top = x-1
+    y.at  = 0
+    return y
+next(Range r)
+    r.at += 1
+    return r.at
+end(Range r)
+    return r.at >= r.top
+
+// have to rethink object construction

@@ -1,0 +1,56 @@
+// TODO convert this into blt3 code
+
+[](Vector v, int idx)
+    return v.data[idx]
+push(Vector v, data)
+    //
+struct Tree(T)
+    Vector(Tree(T)*) children
+    T value
+
+construct(Tree& self, value)
+    self.value = value
+
+destruct(Tree& self)
+    for(node, self.children)
+        delete node
+
+add_child(Tree(T)& node, const T& value)
+    child = new Tree(T)(value);
+    push(node.children, child)
+    return child
+
+value(const Tree& node)
+    return node.value
+
+parse(    Tree(Token)&          root,
+          int*                  new_offset,
+          const Grammar&        G,
+          const Vector(Token)&  input,
+          int                   offset = 0 )
+
+    G_iter = find(G, value(root))
+    if( end(G_iter) )
+        *new_offset = offset + 1
+        return input[offset] == value(root)
+    empty_able = false
+    for(g, G_iter)
+      to_tokens = rhs(g)
+      if(empty(to_tokens))
+          empty_able = true
+      else
+          good = true
+          for(token, to_tokens)
+              if(good)
+                tree = add_child(root, token)
+                nf = offset
+                parsed = parse(tree, &nf, G, input, offset)
+                if( !parsed )
+                    good = false
+                    clear(root)
+                else
+                    offset = nf
+          if(good)
+              *new_offset = offset
+              return true
+    return empty_able

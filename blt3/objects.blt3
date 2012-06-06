@@ -1,0 +1,110 @@
+c classes
+
+typedef struct {
+    int val;
+} name;
+
+name* new_name(int val) {
+    name* out = (name*)malloc(sizeof(name));
+    out->val = val;
+    return out;
+}
+void delete_name(name* n) {
+    free(n);
+}
+int update_name(name* n, int val) {
+    int old_val = n->val;
+    n->val = val;
+    return old_val;
+}
+
+name* n = new_name(10);
+printf("%d\n", update_name(n, 12) );
+delete_name(n);
+
+c++ classes
+class Name {
+    int m_val;
+public:
+    Name(int val) : m_val(val) {}
+    int update(int val) {
+        int oldval = m_val;
+        m_val = val;
+        return oldval;
+    }
+    virtual ~Name() {}
+};
+
+Name n(10);
+std::cout << n.update(12) << std::endl;
+
+python classes
+class Name:
+    def __init__(self, val):
+        self.val = val
+    def update(self, val):
+        oldval = self.val
+        self.val = val
+        return oldval
+    def __del__(self):
+        pass
+
+n = Name(10)
+print n.update(12)
+
+blt classes (v3.1)
+
+struct Name<T>(Base)
+    T m_val
+init(Name<T>& self, const T& val)
+    self.m_val = val
+del(Name& self)
+    pass
+update(Name<T>& self, const T& val)
+    old_val = self.m_val
+    self.m_val = val
+    return old_val
+
+Name v(10)
+print(update(v, 12))
+
+blt classes (v3.0)
+struct(Class)
+    int a
+    int b
+    int c
+
+construct(Class& self, a, b, c)
+    self.a = a
+    self.b = b
+    self.c = c
+
+struct(Derived) Class
+    int x
+
+construct(Derived& self, a, b, c, x)
+    self.x = x
+    construct(Class(self), a, b, c)
+
+struct(scoped_ptr, A)
+    A* x
+
+construct(scoped_ptr& self, x) // maybe
+    self.x = x
+
+destruct(scoped_ptr& self) // maybe
+    delete self.x
+    self.x = nullptr
+
+A& cast(scoped_ptr(A) self)
+    return *self.x
+
+A* cast(scoped_ptr(A) self)
+    return self.x
+
+use()
+    Class x(a,b,c) // build on stack
+    scoped_ptr y(new Class(a,b,c)) // build in heap (and put into on-stack scoped_ptr object)
+    hello(y, a, b, c) // y should be cast to Class& if there exists such a cast and a function of the form hello(Class&,a,b,c)
+
+// TODO should also be able to change the new and delete functions

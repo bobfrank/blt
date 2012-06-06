@@ -1,0 +1,38 @@
+reserved keywords
+
+struct
+import <-- maybe (may just be a macro which sets up calls for dlopen/dlsym/dlclose)
+init
+del
+cast
+new
+delete
+
+symbols
+@ -- chunk of code to execute (only for macros)
+` -- assembly (probably similar to LLVM with some extra stuff)
+need to decide what to do with calling chunks of code
+maybe %(code) would represent having blt code inside of assembly code
+
+$0 in a macro would represent a unique value common to that particular instantiation of the macro (as in just one case in a switch/case series)
+$1 would represent a unique value common to the whole macro expansion (as in all items in an if/else series or switch/case series)
+$name wolud represent a variable name to be used for scoping in the event that it is desired in a macro (see for loop for an example)
+
+& -- refs
+* -- pointers (and derefs)
+etc (pretty much the same as C)
+
+// start of a formal grammar
+macrodef = item macrodef
+        | item
+        | item + '...'
+item = ID args
+    | ID
+    | block
+block = '@' + ID
+args = '(' + argvals + ')'
+argvals = ref + ',' + argvals
+        | ref
+ref = '@' + ID
+    | ID
+    | ID ID

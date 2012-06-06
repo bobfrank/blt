@@ -202,12 +202,12 @@ int main()
         {p_dname,   {ID}},
         {p_dname,   {p_dname,DOT,ID}}
     };
-    grammar nlr_g;
-    remove_left_recursion( nlr_g, g );
+    //grammar nlr_g;
+    //remove_left_recursion( nlr_g, g );
     token_vector input = {LPAREN,ID,TIMES,ID,PLUS,LPAREN,ID,TIMES,ID,RPAREN,RPAREN};
     Tree root(p_exp);
     int nf=0;
-    bool parsed = parse(&root, &nf, nlr_g, input);
+    bool parsed = parse(&root, &nf, g, input);
     if( parsed ) {
         fix_left_recursion_tree(root);
         root.print(std::cout);

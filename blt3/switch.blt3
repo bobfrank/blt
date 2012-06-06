@@ -1,0 +1,54 @@
+switch(@x)
+    return
+
+switch(@x) case(@val) @block ...
+    if(@x() == @val())
+        @block()
+    else
+        switch(@x) ...
+
+// NOTE not quite the same as C's switch statement since you can't just continue into another case(), nor is there break, and I don't yet have default
+
+// below is an attempt to design switch() for int's, optimizing when consecutive
+
+switch(@x, int val_base) case(int val) @block
+    `lbl_%($1)_%(val-val_base):
+    @block()
+    `jmp end_%($1)
+    // TODO create table 
+    `.rodata
+    `jmp_tbl_%($1)
+    for(i, range(val-val_base+1))
+        `.quad lbl_%($1)_%(i)
+    `.erodata
+
+switch(@x, int val_base) case(int val) @block case(val+1) @block2 ...
+    switch(@x, val_base) case(val+1) @block2 ...
+    `lbl_%($1)_%(val-val_base)
+    @block()
+    `jmp end_%($1)
+
+switch(@x) case(int val_base) @block ...
+    jmp_idx = @x()-val_base
+    `jmp jmp_tbl_%($1)+%(jmp_idx)  // would mean jump to the code in the jmp table with offset jmp_idx (may need to change to something more conventional)
+    switch(@x, val_base) @block ...
+    `end_%($1)
+
+//        cmpl    $5, %edi
+//        ja      .L13
+//        subq    $8, %rsp
+//        .cfi_def_cfa_offset 16
+//        movl    %edi, %edi
+//        jmp     *.L9(,%rdi,8)
+//        .section        .rodata
+//        .align 8
+//        .align 4
+//.L9:
+//        .quad   .L3
+//        .quad   .L4
+//        .quad   .L5
+//        .quad   .L6
+//        .quad   .L7
+//        .quad   .L8
+//        .text
+//.L3:

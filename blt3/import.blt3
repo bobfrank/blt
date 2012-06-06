@@ -1,0 +1,16 @@
+// some options for having import as a macro
+import($modname,"C")
+    dlobj = 0
+    `call dlopen(%($modname))
+    `mov ax, %(dlobj)
+    $modname.$fnname(...)
+        `call dlsym(%(dlobj), %($fnname))
+        `call *ax (%(...))
+
+import($modname,"Python")
+    import(libpython,"C")
+    libpython.Py_Initialize() // if not already initialized
+    $modname.$fnname(...) // would have to be a recursive definition to convert each of the different types into python types
+        libpython.Py_Call($modname, ...)
+
+import($modname,"Fortran")

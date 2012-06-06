@@ -1,0 +1,9 @@
+import(libc,"C")
+
+print()
+    pass
+print(char* str)
+    libc.printf(str)
+print(int x, ...)
+    print(itoa(x))
+    print(...)

@@ -1,0 +1,10 @@
+use()
+    for(a, A)
+        print(a)
+
+for($el, S) @block
+    while( !end(S) )
+        el = next(S)
+        @block($el = el) // would mean add the name used and represented by $el into the scope of @block with value el
+
+// NOTE no break's yet.

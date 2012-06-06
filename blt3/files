@@ -1,0 +1,4 @@
+files
+
+name.blt -> name.o        // normal object file to be linked
+            name.blm      // macro and templated object/function header file for use while compiling other blt files
