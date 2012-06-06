@@ -1,0 +1,81 @@
+
+class Range = [*begin, *end]
+new(Range, *begin, *end)
+    Range r = [begin=begin, end=end]
+    return r
+empty(Range r)
+    return r.begin >= r.end
+pop_front(mutable Range r | !empty(r))
+    r.begin++
+front(Range r)
+    return *r.begin
+pop_back(mutable Range r | !empty(r))
+    r.end--
+back(Range r)
+    return *r.end
+
+next(mutable iter) // in can use next() and empty to simplify people's lives, and range can be used for simple usability
+    ret = front(iter)
+    pop_front(iter)
+    return ret //todo still need to figure out how range/vector/next will fit together with 'for .. in ..' clause
+
+class Reverse = [base]
+new(mutable Reverse, base)
+    Reverse r = [base=base]
+    return r
+empty(Reverse r)
+    return empty(r.base)
+pop_front(mutable Reverse r)
+    pop_back(r.base)
+front(Reverse r)
+    return back(r.base)
+pop_back(mutable Reverse r)
+    pop_front(r.base)
+back(Reverse r)
+    return front(r.base)
+
+
+class Xrange = [upto, stop, step]
+new(Xrange, end)
+    return new(Xrange, 0, end, 1)
+new(Xrange, start, end)
+    return new(Xrange, start, end, 1)
+new(Xrange, start, end, step)
+    Xrange x = [upto=start, stop=end, step=step]
+    return x
+empty(Xrange x)
+    return x.upto >= x.stop
+pop_front(mutable Xrange x)
+    x.upto += x.step
+front(Xrange x | !empty(x))
+    return x.upto
+pop_back(mutable Xrange x)
+    x.stop -= x.step
+back(Xrange x | !empty(x))
+    return x.stop - x.step
+
+
+class Vector = [*objs, count, allocated]
+new(Vector) //TODO somehow figure out how I can know the type at this point
+    Vector v = [objs=nullptr, count=0, allocated=0]
+    return v
+len(Vector v)
+    return v.count
+allocate(mutable Vector v)
+    //blahh
+push_back(mutable Vector v, elem x)
+    allocate(v, x) if v.count >= v.allocated
+    v.objs[v.count] = x
+    v.count++
+range(Vector v)
+    return new(Range, v.objs, v.objs+v.count)
+cast(iter, Vector)
+    v = new(Vector)
+    push_back(v, x) for x in iter
+    return v
+
+class List = [*first, *last]
+new(List)
+    List l = [first=nullptr, last=nullptr]
+    return l
+

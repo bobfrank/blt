@@ -3,10 +3,10 @@
 while(@condition) @block
     if(@condition)
         @block()
-        while(@condition) @block // tail recursion should always optimize this into a loop (this is all going to be expanded into a macro anyway)
+        while(@condition) @block // tail recursion should always optimize this into a loop (this is all going to be expanded in the macro)
 
 do @block while(@condition)
     @block()
     while(@condition) @block
 
-// NOTE no breaks yet
+// NOTE no breaks yet (not sure they should be needed usually)

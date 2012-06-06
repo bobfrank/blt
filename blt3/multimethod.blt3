@@ -1,0 +1,17 @@
+enum(Message)
+    MSG_GETPID  = 0
+    MSG_DOIO    = 1
+    MSG_EXEC    = 2
+
+msghdl(MSG_GETPID)
+  return 12345
+
+msghdl(MSG_DOIO)
+  return readxyz()
+
+msghdl(MSG_EXEC)
+  run_program()
+  return 0
+
+msghdl()
+  return -1 // unhandled

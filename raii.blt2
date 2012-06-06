@@ -1,0 +1,16 @@
+//raii
+
+import "stdio.h" with "C" as cstdio;
+
+class File [FILE* fp]
+new(File, fname, params="r")
+    File f[ fp=cstdio.fopen(cast(fname,const char*), cast(params,const char*)) ]
+    return f
+delete(mutable File f)
+    fclose(f.fp)
+cast(File f, FILE*)
+    return f.fp
+
+// would probably have a cast function like this too (in the String impl)
+cast(String s, const char*)
+    return s.c_str //or wherever its stored in the implementation

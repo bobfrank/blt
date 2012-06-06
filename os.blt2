@@ -1,0 +1,6 @@
+If you'd like to know if your favourite language is suited for OSDeving, just consider the following questions 
+    * Can you cope with datastructures having a specific bits & bytes arrangement (mandatory for e.g. MMU structures and alike things)?
+    * Can you take control of memory allocation/freeing? Or can you at least subdivide a large chunk of memory in smaller chunks that other functions can use transparently (necessary for any sort of memory management)?
+    * Are you able to build a self-sufficient run-time library to support language features you'll need ?
+    * Can you easily interface XYZ with some assembly code (yes, you'll have some, at least in the run-time library you'll have to write)?
+    * If XYZ fits the other points and is an interpreted language, can you invoke code coming from raw data bytes with XYZ, i.e. jump at a specific address and continue execution there (this will be mandatory for loading and running programs)? 

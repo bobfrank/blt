@@ -1,0 +1,19 @@
+class Set = []
+new(Set)
+    pass
+len(Set s)
+    pass
+issubset(Set s, Set t)
+    pass
+issuperset(Set s, Set t)
+    pass
+union(Set s, Set t)
+intersection(Set s, Set t)
+difference(Set s, Set t)
+symmetric_difference(Set s, Set t)
+add(Set s, x)
+remove(Set s, x)
+discard(Set s, x)
+pop(Set s)
+clear(Set s)
+//in, not in

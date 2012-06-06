@@ -4,6 +4,7 @@ struct
 new
 del
 cast
+enum
 
 symbols
 @ -- chunk of code to execute (only for macros)

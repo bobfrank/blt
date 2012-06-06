@@ -1,4 +1,4 @@
-c classes
+//c classes
 
 typedef struct {
     int val;
@@ -22,7 +22,7 @@ name* n = new_name(10);
 printf("%d\n", update_name(n, 12) );
 delete_name(n);
 
-c++ classes
+//c++ classes
 class Name {
     int m_val;
 public:
@@ -38,7 +38,7 @@ public:
 Name n(10);
 std::cout << n.update(12) << std::endl;
 
-python classes
+//python classes
 class Name:
     def __init__(self, val):
         self.val = val
@@ -52,11 +52,13 @@ class Name:
 n = Name(10)
 print n.update(12)
 
-blt classes (v3.1)
+//blt classes (v3.1)
 
 struct Name<T>(Base)
+ -- or perhaps --
+struct(Base) Name(T) // as in it is a type of Base struct named Name with templated type T
     T m_val
-new(Name<T>& self, const T& val)
+new(Name<T>& self, const T& val) // or new(Name(T)& self, const T& val)
     self.m_val = val
 del(Name& self)
     pass
@@ -68,7 +70,7 @@ update(Name<T>& self, const T& val)
 Name v(10)
 print(update(v, 12))
 
-blt classes (v3.0)
+//blt classes (v3.0)
 struct(Class)
     int a
     int b

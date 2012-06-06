@@ -193,11 +193,11 @@ int main()
     //times   : times TIMES fact | fact
     //fact    : LPAREN exp RPAREN | ID
     grammar g = {
-        {p_exp,     {p_exp,PLUS,p_times}},
-        {p_exp,     {p_times}},
+        {p_expr,    {p_expr,PLUS,p_times}},
+        {p_expr,    {p_times}},
         {p_times,   {p_times,TIMES,p_fact}},
         {p_times,   {p_fact}},
-        {p_fact,    {LPAREN,p_exp,RPAREN}},
+        {p_fact,    {LPAREN,p_expr,RPAREN}},
         {p_fact,    {ID}},
         {p_dname,   {ID}},
         {p_dname,   {p_dname,DOT,ID}}

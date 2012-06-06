@@ -1,0 +1,53 @@
+
+ored(list)
+    final = false
+    final |= x for x in list
+    return final
+
+class Atom = [token, tokens, point]
+new(Atom, token, tokens, point)
+    Atom a = [token=token, tokens=tokens, point=point]
+    return a
+
+class AtomSet = [label, atoms]
+new(AtomSet, label, atoms)
+    AtomSet a = [label=label, atoms=atoms]
+    return a
+
+class DFA = [atom_sets, links]
+new(DFA)
+    DFA dfa=[atom_sets=set(), links=[]]
+    return dfa
+
+get_closure_atom(mutable out, grammar,
+                 atom : atom.point < len(atom.tokens))
+    B = atom.tokens[atom.point]
+    return ored([add(out.atoms, new(Atom, B, token_vector,0)) for token_vector in find(grammar, B)])
+
+get_closure(mutable out, grammar)
+    while ored([get_closure_atom(out,grammar,atom) for atom in atoms])
+    return atoms
+
+get_goto(mutable out, atom_set, grammar, token)
+    add(out.atoms, new(Atom, atom.token, atom.tokens, atom.point+1))
+        for atom in atom_set if atom.point < len(atom.tokens) && atom.tokens[point] == token
+    get_closure(out, grammar)
+    return out
+
+build_dfa_byset(mutable dfa, mutable count, grammar, tokens, label, labeled_atom_set)
+    for token in tokens
+        after_token = get_goto(new(AtomSet,0,[]), atom_set.atoms, grammar, token)
+        here = new(AtomSet, count+1, after_token)
+        if not empty(after_token) and add(dfa.atom_sets, here, already_there_obj)
+            count += 1
+            return true
+        else
+            add(dfa.links, new(Link, atom_set.label, already_there_obj.label, token))
+    return false
+
+build_dfa(mutable dfa, grammar, tokens, S_tick, first_token)
+    first_atomset = get_closure([new(Atom, S_tick, [first_token], 0)], grammar)
+    add(dfa.atom_sets, new(AtomSet, 0, first_atomset) )
+    count = 1
+    while ored([build_dfa_byset(dfa, count, grammar, tokens, atom_set) for atom_set in dfa.atom_sets])
+    return dfa

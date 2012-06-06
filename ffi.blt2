@@ -1,0 +1,7 @@
+import "string.h" with "C" as cstring;
+
+main()
+    src = "const string"
+    dest = new(char[], 10)
+    cstring.memcpy(&dest, &src, len(src)+1) //should types be looked up in the .h?
+                                            // or should they just be guessed based on what the input is?

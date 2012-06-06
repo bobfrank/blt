@@ -1,0 +1,49 @@
+import stack;
+
+//  from http://plus.kaist.ac.kr/~shoh/ocaml/ocamllex-ocamlyacc/ocamlyacc-tutorial/sec-multi-function-calculator.html
+//input:  /* empty */ { }
+//    | input line    { }
+//;
+//line:   NEWLINE     { }
+//    | exp NEWLINE   { printf "\t%.10g\n" $1; flush stdout }
+//    | error NEWLINE { }
+//;
+//exp:    NUM         { $1 }
+//    | VAR           { try Hashtbl.find var_table $1
+//                  with Not_found ->
+//                    printf "no such variable '%s'\n" $1;
+//                    0.0
+//                }
+//    | VAR EQ exp        { Hashtbl.replace var_table $1 $3;
+//                  $3
+//                }
+//    | FNCT LPAREN exp RPAREN    { $1 $3 }
+//    | exp PLUS exp      { $1 +. $3 }
+//    | exp MINUS exp     { $1 -. $3 }
+//    | exp MULTIPLY exp  { $1 *. $3 }
+//    | exp DIVIDE exp    { $1 /. $3 }
+//    | MINUS exp %prec NEG   { -. $2 }
+//    | exp CARET exp     { $1 ** $3 }
+//    | LPAREN exp RPAREN { $2 }
+//;
+
+class token {
+    int id;
+    gen_code => (Code* code);
+}
+
+typedef vector<token> token_vector;
+unordered_multimap< key=token, value=token_vector > grammar;
+
+main
+{
+    grammar = {
+        "block": ["const","ident","equals","number",{,"comma","ident","equals","number",},"semicolon"],
+        "block": ["var","ident",{,"comma","ident",},"semicolon"],
+        "block": ["procedure","ident","semicolon","block","semicolon","statement"]
+    }
+}
+
+class handler
+{
+}

@@ -1,0 +1,51 @@
+swap(mutable x, mutable y)
+    tmp = #x, x = y, y = tmp
+
+minval(A, args)
+    min, min_val = -1, inf
+    min, min_val = arg, A[arg] for arg in args if arg < len(A) and A[arg] < min_val
+    return min
+
+siftdown(mutable A, start, end)
+    for( root = start; root*2+1 <= end; )
+        swap = minval(A, [root, root*2+1, root*2+2])
+        if swap == root
+            return
+        else
+            swap(A[root], A[swap])
+            root = swap
+    return A
+
+heapify(mutable A)
+    for start in Xrange(len(A)/2-1, 0, -1)
+        siftdown(A, [start, len(A)-1])
+    return A
+
+heap_sort(mutable A)
+    heapify(A)
+    for end in Xrange(len(A)+1, 1, -1)
+        swap( A[end], A[0] )
+        siftdown( A, 0, end-1 )
+    return A
+
+
+pass_by_const_ref(x) // passes a cost ref or copy if sizeof(x) <= sizeof(void*)
+    x = 2 //fails to compile
+pass_by_nonconst_ref(mutable x) // always passes a nonconst ref (though it may be copied as its called with #)
+    x = 3 //changes passed in x
+    return x //in case they made a copy of x
+pass_by_copy(#x)
+    x = 3 //changes local copy
+swap(mutable x, mutable y)
+    tmp = #x //create a copy on write of x (# is needed here because it is a construction)
+    x   = y  //assign the value of x with the value of y? (# not needed here because its an assignment)
+    y   = tmp
+dontchange(x)
+    someresponse = pass_by_nonconst_ref(#x) //makes a copy on write to be passed in
+callingconst(x)
+    someresponse = pass_by_nonconst_ref(x) // this will fail to compile (can't cast const to non const)
+passbyvalue(x)
+    pass_by_const_ref($x) // force a pass by value (useful for calling c apis)
+passbyref(x)
+    callable(&x) //passes a pointer of x (really only useful for calling c apis)
+    pass_by_copy(&x) //will make a copy of a pointer -- would have anyway since sizeof(typeof(x)*) == sizeof(void*), so the # has no effect here

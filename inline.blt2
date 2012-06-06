@@ -1,0 +1,50 @@
+// some thoughts on how to do inline assembly...
+
+
+// need to be able to take advantage of instructions the compile is aware of,
+//  but also use some that just came out before the compiler introduces support for them
+// probably will need support for full compile time programming, and somehow pass back
+// the result to the compiler for use in the output bytes/assembly
+
+// some arm examples of instructions...
+// LDR immediate
+LDR<c> <Rt>, [<Rn>{,#<imm>}] ]
+        LDR(imm5, Rn, Rt)
+        011 0 1 imm5:5 Rn:3 Rt:3
+LDR<c> <rt>,[SP{,#<imm>}]
+        LDR(Rt, imm8)
+        1001 1 Rt:3 imm8:8
+LDR<c>.W <rt>,[<Rn>{,#<imm>}]
+        LDR(Rn, Rt, imm12)
+        11111 00 0 1 10 1 Rn:4 Rt:4 imm12:12
+LDR<c> <Rt>,[<Rn>,#-<imm8>]
+LDR<c> <Rt>,[<Rn>],#+/-<imm8>
+LDR<c> <Rt>,[<Rn>,#+/-<imm8>]!
+        LDR(Rn, Rt, P,U,W, imm8)
+        11111 00 0 0 10 1 Rn:4 Rt:4 1 P:1 U:1 W:1 imm8:8
+or
+LDR<c> <Rt>,[<Rn>{,#+/-<imm12>}]
+LDR<c> <Rt>,[<Rn>],#+/-<imm12>
+LDR<c> <Rt>,[<Rn>,#+/-<imm12>]!
+        LDR(PUW,Rn,Rt,imm12)
+        cond:4 010 P:1 U:1 0 W:1 1 Rn:4 Rt:4 imm12:12
+
+// LDR literal
+LDR<c> <Rt>,<label>
+        LDR(Rt, imm8)
+        01001 Rt:3 imm8:8
+LDR<c>.W <Rt>,<label>
+LDR<c>.W <Rt>,[PC,#-0]
+        LDR(U, Rt, imm12)
+        11111 00 0 U:1 10 1 1111 Rt:4 imm12:12
+LDR<c> <Rt>,<label>
+LDR<c> <Rt>,[PC,#-0]
+        LDR(Cond, U, Rt, imm12)
+        cond:4 010 (1) U:1 0 (0) 1 1111 Rt:4 imm12:12
+
+//LDR register
+LDR<c> <Rt>,[<Rn>,<Rm>]
+        LDR(Rm, Rn, Rt)
+        0101 100 Rm:3 Rn:3 Rt:3
+LDR(Rn, Rt, imm2, Rm)
+LDR(cond, P,U,W,Rn,Rt,imm5,type,Rm)
