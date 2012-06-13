@@ -1,0 +1,7 @@
+enum(...)
+    enum(0, ...)
+enum(int x, $name, ...)
+    const($name,x)
+    enum(x+1, ...)
+enum(int x)
+    pass

@@ -1,0 +1,85 @@
+asm
+    >>>
+asm | $code | ...
+    $code
+    asm ...
+asm | $code
+    $code
+    >>>
+asm $assembly ...
+    >>> $assembly <<< asm ...
+
+basic_types @
+    asm
+basic_types @ $local_name $llvm_label $size ...
+    typestr($local_name)
+        $llvm_label
+    sizeof($local_name)
+        $size
+    basic_types @ ...
+
+//  local name  llvm label      size
+basic_types
+    ptr($X)     typestr($X)*    4
+    char        i8              1
+    uchar       i8              1
+    int         i32             4
+    uint        i32             4
+    long        i64             8
+    ulong       i64             8
+    half        half            4
+    float       float           8
+    double      double          16
+
+//ult: interprets the operands as unsigned values and yields true if op1 is less than op2.
+
+get_types $type $name
+    typestr($type)
+get_types $type $name ...
+    typestr($type) ` ` get_types ...
+struct $X ...
+    asm %struct. | $X | = type { ${ get_types ... } }
+    sizeof($X)
+        TODO figure out with alignment issues, etc
+    typestr($X)
+        >>%struct.$X
+    alignment($X)
+        TODO figure out the proper alignment -- max(alignment(...))?
+stack_alloc($name, $T)
+    asm % | $name | = alloca | typestr($T) | , align | alignment($T)
+heap_alloc($name, $T)
+    stack_alloc($name, $T)
+    asm call malloc | sizeof($T)
+    asm mov ax, % | $name
+    asm %1 | $0 | = call noalias i8* @malloc(i64 ${sizeof($T)}) nounwind
+    asm %2 | $0 | = bitcast i8* %1 | $0 | to %struct. | $type
+    asm store %struct. | $type | %2 | $0 |, %struct. | $type | * % | $name | , align 8
+    asm %3 | $0 | = load %struct. | $type | * % | $name |, align 8
+
+//  %4 = call noalias i8* @malloc(i64 4) nounwind
+//  %5 = bitcast i8* %4 to i32*
+//  store i32* %5, i32** %y, align 8
+
+$result_type $fn(...) @block
+    convert
+    block must have return of type $result_type
+void $fn(...) @block
+    convert
+    if block has return it must not be the return macro with a parenthetical argument
+auto $b(obj($type,$a))
+    $type($a) $b($a)
+
+struct W
+    int x
+    float y
+    double d
+
+can be built in by macro expansions within the function macro
+e.g. a -> obj(type(a),name(a), ...)
+      so a function might have a signature like this:
+  fn(obj(int,$a))
+  which would be produced when the user entered a function like fn(int a)
+A a -> define macro "a -> obj(A,a)" & alloca stuct.A & add to destructor list
+A a() -> A a & call A constructor
+obj(A,b)
+operator #(A a, B b) -> obj(A,a) # obj(B,b) -> operator #(obj(A,a),obj(B,b)) & normal function stuff

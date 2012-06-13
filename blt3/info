@@ -1,10 +1,4 @@
-reserved keywords
-
-struct
-new
-del
-cast
-enum
+no reserved keywords
 
 symbols
 @ -- chunk of code to execute (only for macros)
@@ -21,16 +15,36 @@ $name wolud represent a variable name to be used for scoping in the event that i
 etc (pretty much the same as C)
 
 // start of a formal grammar (trying to avoid left recursive parse trees so I can try to use recursive descent parser)
-macrodef = item macrodef
-        | item
-        | item + '...'
-item = ID args
+code = codetype code
+    | codetype
+codetype = macro
+    | NUMBER
+    | STRING
+    | ASSEMBLY
+macro = macroprefix block
+     | macroprefix
+block = INDENT code DEDENT
+macroprefix = macroelem macroprefix
+        | macroelem
+        | macroelem '...' ID
+macroelem = ID args
+    | DOLLAR_ID args
     | ID
-    | block
-block = '@' + ID
-args = '(' + argvals + ')'
-argvals = ref + ',' + argvals
-        | ref
-ref = '@' + ID
-    | ID
-    | ID ID
+    | DOLLAR_ID
+    | AT_ID
+    | '@'
+args = '(' argvals ')'
+    | '(' argvals ',' '...' ')'
+    | '(' argvals ',' '...' ID ')'
+argvals = macroprefix ',' argvals
+        | macroprefix
+
+everything is either a macro definition or a macro call
+@ by itself will force a block to exist with the following items, e.g. useful for building a struct or listing out all types
+function definitions are another macro expansion
+
+an idea (see whitespace98.pdf) is to allow overloading whitespace, blt3 is probably already capable without changes.
+still need to figure out scoping issues
+
+because type information isn't defined in the language, nor are objects, nor are functions, it can be used as
+both a statically typed language and dynamically typed language by just using different libraries.

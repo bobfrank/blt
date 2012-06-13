@@ -1,0 +1,4 @@
+const($name,value)
+    `.rodata
+    `%($name) %(value)
+    `.erodata

@@ -5,6 +5,5 @@ use()
 for($el, S) @block
     while( !end(S) )
         el = next(S)
-        @block($el = el) // would mean add the name used and represented by $el into the scope of @block with value el
-
-// NOTE no break's yet.
+        @block($el = el, break=`jmp for_end_$0`) // would mean add the name used and represented by $el into the scope of @block with value el
+    `for_end_$0:
