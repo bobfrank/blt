@@ -1,60 +1,67 @@
-asm
-    >>>
-asm | $code | ...
-    $code
-    asm ...
-asm | $code
-    $code
-    >>>
-asm $assembly ...
-    >>> $assembly <<< asm ...
-
 basic_types @
-    asm
-basic_types @ $local_name $llvm_label $size ...
-    typestr($local_name)
-        $llvm_label
-    sizeof($local_name)
+    
+basic_types @ $type_name $llvm_type $size $alignment ...
+    typestr($type_name)
+        $llvm_type
+    sizeof($type_name)
         $size
+    alignment($type_name)
+        $alignment
+    $type_name $name($init_value)
+        $["%" $name " = alloca " $llvm_type ", align" $alignment]
+        $name
+            obj($type_name,$name) // TODO figure out how this $name wont expand into this macro and infinitely loop..
     basic_types @ ...
 
-//  local name  llvm label      size
+//  type name   llvm type       size    alignment
 basic_types
-    ptr($X)     typestr($X)*    4
-    char        i8              1
-    uchar       i8              1
-    int         i32             4
-    uint        i32             4
-    long        i64             8
-    ulong       i64             8
-    half        half            4
-    float       float           8
-    double      double          16
+    ptr($X)     typestr($X)*    4       4
+    char        i8              1       1
+    uchar       i8              1       1
+    short       i16             2       2
+    ushort      i16             2       2
+    int         i32             4       4
+    uint        i32             4       4
+    long        i64             8       8
+    ulong       i64             8       8
+    half        half            4       8
+    float       float           8       4
+    double      double          16      8
 
-//ult: interprets the operands as unsigned values and yields true if op1 is less than op2.
+
+//    eq: equal
+//    ne: not equal
+//    ugt: unsigned greater than
+//    uge: unsigned greater or equal
+//    ult: unsigned less than
+//    ule: unsigned less or equal
+//    sgt: signed greater than
+//    sge: signed greater or equal
+//    slt: signed less than
+//    sle: signed less or equal
 
 get_types $type $name
     typestr($type)
 get_types $type $name ...
-    typestr($type) ` ` get_types ...
+    typestr($type) " " get_types ...
 struct $X ...
-    asm %struct. | $X | = type { ${ get_types ... } }
+    $["%struct." $X " = type {" get_types ... "}"]
     sizeof($X)
-        TODO figure out with alignment issues, etc
+        //TODO figure out with alignment issues, etc
     typestr($X)
-        >>%struct.$X
+        $["%struct." $X]
     alignment($X)
-        TODO figure out the proper alignment -- max(alignment(...))?
+        //TODO figure out the proper alignment -- max(alignment(...))?
 stack_alloc($name, $T)
-    asm % | $name | = alloca | typestr($T) | , align | alignment($T)
+    $["%" $name " = alloca " typestr($T) ", align " alignment($T)]S
 heap_alloc($name, $T)
     stack_alloc($name, $T)
-    asm call malloc | sizeof($T)
-    asm mov ax, % | $name
-    asm %1 | $0 | = call noalias i8* @malloc(i64 ${sizeof($T)}) nounwind
-    asm %2 | $0 | = bitcast i8* %1 | $0 | to %struct. | $type
-    asm store %struct. | $type | %2 | $0 |, %struct. | $type | * % | $name | , align 8
-    asm %3 | $0 | = load %struct. | $type | * % | $name |, align 8
+    $["call malloc " sizeof($T)]
+    $["mov ax, %" $name]
+    $["%1" $0 " = call noalias i8* @malloc(i64 " sizeof($T) ") nounwind"]
+    $["%2" $0 " = bitcast i8* %1" $0 " to %struct." $type]
+    $["store %struct." $type " %2" $0 ", %struct." $type "* %" $name ", align 8"]
+    $["%3" $0 " = load %struct." $type "* %" $name ", align 8"]
 
 //  %4 = call noalias i8* @malloc(i64 4) nounwind
 //  %5 = bitcast i8* %4 to i32*
@@ -83,3 +90,8 @@ A a -> define macro "a -> obj(A,a)" & alloca stuct.A & add to destructor list
 A a() -> A a & call A constructor
 obj(A,b)
 operator #(A a, B b) -> obj(A,a) # obj(B,b) -> operator #(obj(A,a),obj(B,b)) & normal function stuff
+$# line #
+$? filename
+$0 arbitrary number within this macro
+$1 arbitrary number within this greater macro... need to clearly define
+$["mov " $blah ", ax"] - some assembly output

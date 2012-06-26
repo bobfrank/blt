@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
   printf("%d\n", factorial(atoi(argv[1])));
   X x;
   X y;
+  int z;
   func(x, &y);
 }
 

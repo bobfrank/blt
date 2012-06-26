@@ -14,37 +14,76 @@ $name wolud represent a variable name to be used for scoping in the event that i
 * -- pointers (and derefs)
 etc (pretty much the same as C)
 
-// start of a formal grammar (trying to avoid left recursive parse trees so I can try to use recursive descent parser)
-code = codetype code
+// start of a formal grammar (trying to avoid left recursive grammar so I can use a simple recursive descent parser)
+
+code =
+      codetype code
     | codetype
-codetype = macro
+
+codetype =
+      macro
     | NUMBER
     | STRING
-    | ASSEMBLY
-macro = macroprefix block
-     | macroprefix
-block = INDENT code DEDENT
-macroprefix = macroelem macroprefix
-        | macroelem
-        | macroelem '...' ID
-macroelem = ID args
+    | DOLLAR_ID
+    | assembly
+
+assembly = 
+      "$[" code "]"
+
+macro =
+      macroprefix block
+    | macroprefix
+
+block =
+      INDENT code DEDENT
+
+macroprefix =
+      macroelem macroprefix
+    | macroelem
+    | macroelem '...' ID
+
+macroelem =
+      ID args
     | DOLLAR_ID args
     | ID
     | DOLLAR_ID
     | AT_ID
     | '@'
-args = '(' argvals ')'
+
+args =
+      '(' argvals ')'
     | '(' argvals ',' '...' ')'
     | '(' argvals ',' '...' ID ')'
-argvals = macroprefix ',' argvals
-        | macroprefix
 
-everything is either a macro definition or a macro call
-@ by itself will force a block to exist with the following items, e.g. useful for building a struct or listing out all types
-function definitions are another macro expansion
+argvals =
+      macroprefix ',' argvals
+    | macroprefix
 
-an idea (see whitespace98.pdf) is to allow overloading whitespace, blt3 is probably already capable without changes.
-still need to figure out scoping issues
+Everything is either a macro definition or a macro call.
+Not positive on how to decide when its a def and when its a
+call, especially since I want to be able to overwrite a
+macro's definition later on in code
+or have a scoped macro definition overwrite possibly.
 
-because type information isn't defined in the language, nor are objects, nor are functions, it can be used as
-both a statically typed language and dynamically typed language by just using different libraries.
+@ by itself will force a block to exist with the following
+items, e.g. useful for building a struct or listing out all
+types.
+
+Function definitions are simply another macro expansion.
+
+an idea (see whitespace98.pdf) is to allow overloading
+whitespace, blt3 is probably already capable without
+changes.
+
+because type information isn't defined in the language,
+nor are objects, nor are functions, it can be used as
+both a statically typed language and dynamically typed
+language by just using different libraries. With the
+normal one being setup for static typing
+
+Scoping will probably be static block level scoping, so
+that any macro defined within a block will be visible within
+that block and subblocks. Dynamic scoping can be fairly
+easily implemented inside block scoping as can be seen in
+../dynamic_scoping.cpp (only blt will have nicer syntax for
+it)

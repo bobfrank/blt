@@ -1,11 +1,11 @@
 // some options for having import as a macro
 import($modname,"C")
     dlobj = 0
-    `call dlopen(%($modname))
-    `mov ax, %(dlobj)
+    $["call dlopen(" $modname)]
+    $["mov ax, " dlobj]
     $modname.$fnname(...)
-        `call dlsym(%(dlobj), %($fnname))
-        `call *ax (%(...)) // TODO need to look up llvm call function format and need to decide on how to cast items in ... (and maybe return values)
+        $["call dlsym(" dlobj ", " $fnname]
+        $["call *ax " (...)] // TODO need to look up llvm call function format and need to decide on how to cast items in ... (and maybe return values)
 
 import($modname,"Python")
     import(libpython,"C")

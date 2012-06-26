@@ -1,4 +1,3 @@
-const($name,value)
-    `.rodata
-    `%($name) %(value)
-    `.erodata
+const $name = value
+    $name
+        $value
