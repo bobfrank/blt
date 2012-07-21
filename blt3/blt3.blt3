@@ -1,28 +1,23 @@
-
-[](Vector v, int idx)
-    return v.data[idx]
-push(Vector v, data)
-    // realloc, etc, etc
 struct Tree<T>
-    Vector(Tree<T>*) children
+    vector<Tree<T>*> nodes
     T value
 
-new(Tree& self, value)
-    self.value = value
+void new(const Tree<T>& tree, const T& value)
+    tree.value = value
 
-del(Tree& self)
-    for(node, self.children)
+void Tree<T>::add_child(const T& value)
+    tree.nodes.push_back(new Tree<T>(value))
+
+const T& operator [](const int idx)
+    return tree.data[idx]
+
+void delete(Tree<T>& tree)
+    for node in tree.nodes
         delete node
 
-add_child(Tree<T>& node, const T& value)
-    child = new Tree<T>(value);
-    push(node.children, child)
-    return child
+Tree<Token> // instantiate this type so it can be used
 
-value(const Tree& node)
-    return node.value
-
-parse(    Tree<Token>&          root,
+void parse(    Tree<Token>&          root,
           int*                  new_offset,
           const Grammar&        G,
           const Vector<Token>&  input,

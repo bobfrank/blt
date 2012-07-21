@@ -2,74 +2,19 @@ no reserved keywords
 
 symbols
 @ -- chunk of code to execute (only for macros)
-` -- assembly (probably similar to LLVM with some extra stuff)
-need to decide what to do with calling chunks of code
-maybe %(code) would represent having blt code inside of assembly code
+$[] -- assembly (probably similar to LLVM with some extra stuff)
 
 $0 in a macro would represent a unique value common to that particular instantiation of the macro (as in just one case in a switch/case series)
 $1 would represent a unique value common to the whole macro expansion (as in all items in an if/else series or switch/case series)
 $name wolud represent a variable name to be used for scoping in the event that it is desired in a macro (see for loop for an example)
 
-& -- refs
-* -- pointers (and derefs)
-etc (pretty much the same as C)
-
-// start of a formal grammar (trying to avoid left recursive grammar so I can use a simple recursive descent parser)
-
-code =
-      codetype code
-    | codetype
-
-codetype =
-      macro
-    | NUMBER
-    | STRING
-    | DOLLAR_ID
-    | assembly
-
-assembly = 
-      "$[" code "]"
-
-macro =
-      macroprefix block
-    | macroprefix
-
-block =
-      INDENT code DEDENT
-
-macroprefix =
-      macroelem macroprefix
-    | macroelem
-    | macroelem '...' ID
-
-macroelem =
-      ID args
-    | DOLLAR_ID args
-    | ID
-    | DOLLAR_ID
-    | AT_ID
-    | '@'
-
-args =
-      '(' argvals ')'
-    | '(' argvals ',' '...' ')'
-    | '(' argvals ',' '...' ID ')'
-
-argvals =
-      macroprefix ',' argvals
-    | macroprefix
-
 Everything is either a macro definition or a macro call.
-Not positive on how to decide when its a def and when its a
-call, especially since I want to be able to overwrite a
-macro's definition later on in code
-or have a scoped macro definition overwrite possibly.
 
 @ by itself will force a block to exist with the following
 items, e.g. useful for building a struct or listing out all
 types.
 
-Function definitions are simply another macro expansion.
+Function definitions are simply another macro call.
 
 an idea (see whitespace98.pdf) is to allow overloading
 whitespace, blt3 is probably already capable without
@@ -79,7 +24,7 @@ because type information isn't defined in the language,
 nor are objects, nor are functions, it can be used as
 both a statically typed language and dynamically typed
 language by just using different libraries. With the
-normal one being setup for static typing
+normal one being setup for static typing.
 
 Scoping will probably be static block level scoping, so
 that any macro defined within a block will be visible within
@@ -87,3 +32,42 @@ that block and subblocks. Dynamic scoping can be fairly
 easily implemented inside block scoping as can be seen in
 ../dynamic_scoping.cpp (only blt will have nicer syntax for
 it)
+Scoping will also probably be defined so that a new scope
+level is created whenever an @block() is called from a macro
+
+can be built in by macro expansions within the function macro
+e.g. a -> obj(type(a),"a")
+      so a function might have a signature like this:
+  fn(obj(int,$$a))
+  which would be produced when the user entered a function like fn(int a)
+
+$ setup_function_arg $TYPE $def_name
+$ setup_function $ret_type @block ...
+
+$ $ret_type operator $infix($TL $tl, $TR $tr) @block
+    setup_function operator_$infix obj($TL,$$tl_in) obj($TR,$tr_in)
+    $ obj($TL,$$tl_in) $infix obj($TR,$$tr_in)
+        call_function operator_$infix obj($TL,$$tl_in) obj($TR,$tr_in)
+
+$ $ret_type $fn_name($T1 $t1, ...) @block
+
+
+A a -> define macro "a -> obj(A,a)" & alloca stuct.A & add to destructor list
+A a() -> A a & call A constructor
+obj(A,b)
+operator #(A a, B b) -> obj(A,a) # obj(B,b) -> operator #(obj(A,a),obj(B,b)) & normal function stuff
+$# line #
+$? filename
+$0 arbitrary number within this macro
+$1 arbitrary number within this greater macro... need to clearly define
+$["mov " $blah ", ax"] - some assembly output
+*  any call to a @block results in a new scope level
+*  delay expanding macro arguments until the last minute
+*  maybe only allow expansion if the macro result is defined in one line (for the above point)
+*  $$name converts the name used (and represented by $name) will be converted into a string
+*  name -> type("name")
+*  var     -> obj(name,"var")  -> obj(type("name"),"var")
+* macrodef = "$" macrocall
+* #!/usr/bin/blt_run -- compile source and run (so it can be used for short scripts easily)
+* error messages like ${"Error: The system is down (" $? ":" $# ")"}
+ -- TODO need to figure out how type inference will be plugged into this language

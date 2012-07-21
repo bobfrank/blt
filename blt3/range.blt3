@@ -6,7 +6,7 @@ struct Range
     int top
     int at
 Range(x)
-    y = Range()
+    Range y()
     y.top = x-1
     y.at  = 0
     return y

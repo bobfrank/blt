@@ -1,0 +1,56 @@
+
+code              : codetype code
+                  | codetype
+                  ;
+
+codetype          : macrodef
+                  | macrocall
+                  | assembly
+                  | NEXT_STMT
+                  ;
+
+macrodef          : DOLLAR macrocall
+                  ;
+
+macrocall         : macroprefix_stmt block
+                  | macroprefix_stmt
+                  ;
+
+block             : INDENT code DEDENT
+                  ;
+
+macroprefix_stmt  : macroprefix NEXT_STMT
+                  ;
+
+macroprefix       : macroprefix macroelem
+                  | macroelem_nd
+                  ;
+
+macroelem         : macroelem_nd
+                  | DOLLAR
+                  ;
+
+macroelem_nd      : ID
+                  | OPERATOR
+                  | DOLLAR_ID
+                  | DD_ID
+                  | AT_ID
+                  | AT
+                  | NUMBER
+                  | STRING
+                  | DOT_DOT_DOT
+                  | DOT_DOT_DOT_ID
+                  ;
+
+assembly          : BEGIN_ASSEMBLY assembly_code END_ASSEMBLY
+                  | BEGIN_ASSEMBLY DOLLAR macroprefix END_ASSEMBLY
+                  ;
+
+assembly_code     : assembly_code assembly_codetype
+                  | assembly_codetype
+                  ;
+
+assembly_codetype : NUMBER
+                  | STRING
+                  | DD_ID
+                  ;

@@ -1,14 +1,14 @@
 // some options for having import as a macro
-import($modname,"C")
+$ cimport $modname
     dlobj = 0
     $["call dlopen(" $modname)]
     $["mov ax, " dlobj]
-    $modname.$fnname(...)
+    $ $modname.$fnname(...)
         $["call dlsym(" dlobj ", " $fnname]
         $["call *ax " (...)] // TODO need to look up llvm call function format and need to decide on how to cast items in ... (and maybe return values)
 
-import($modname,"Python")
+$ pyimport $modname
     import(libpython,"C")
     libpython.Py_Initialize() // if not already initialized
-    $modname.$fnname(...) // would have to be a recursive definition to convert each of the different types into python types
+    $ $modname.$fnname(...) // would have to be a recursive definition to convert each of the different types into python types
         libpython.Py_Call($modname, ...)

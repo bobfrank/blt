@@ -1,16 +1,15 @@
-basic_types @
-    
-basic_types @ $type_name $llvm_type $size $alignment ...
-    typestr($type_name)
+$ basic_types @
+$ basic_types @ $type_name $llvm_type $size $alignment ...
+    $ typestr($type_name)
         $llvm_type
-    sizeof($type_name)
+    $ sizeof($type_name)
         $size
-    alignment($type_name)
+    $ alignment($type_name)
         $alignment
-    $type_name $name($init_value)
-        $["%" $name " = alloca " $llvm_type ", align" $alignment]
-        $name
-            obj($type_name,$name) // TODO figure out how this $name wont expand into this macro and infinitely loop..
+    $ $type_name $name($init_value)
+        $[ "%" $$name " = alloca " $$llvm_type ", align" $$alignment ]$
+        $ $name
+            obj($type_name,$$name)
     basic_types @ ...
 
 //  type name   llvm type       size    alignment
@@ -28,6 +27,8 @@ basic_types
     float       float           8       4
     double      double          16      8
 
+$ $lhs == $rhs
+    $["cmp eq"]$
 
 //    eq: equal
 //    ne: not equal
@@ -40,40 +41,59 @@ basic_types
 //    slt: signed less than
 //    sle: signed less or equal
 
-get_types $type $name
-    typestr($type)
-get_types $type $name ...
+$ get_types
+$ get_types $type $name ...
     typestr($type) " " get_types ...
-struct $X ...
-    $["%struct." $X " = type {" get_types ... "}"]
-    sizeof($X)
+$ add_element_macros
+$ add_element_macros $name $type $elemname ...
+    $ $name . $elemname
+        $["get $elemname from $name... TODO"]$
+    add_element_macros $name ...
+
+// TODO add templating like C++ templates (will need to setup macros which set this up per type-set supplied as needed)
+$ struct $X @ ...
+    $["%struct." $$X " = type {" ]$
+    get_types ...
+    $["}\n"]$
+
+    $ sizeof($X)
         //TODO figure out with alignment issues, etc
-    typestr($X)
-        $["%struct." $X]
-    alignment($X)
+    $ typestr($X)
+        $["%struct." $$X]$
+    $ alignment($X)
         //TODO figure out the proper alignment -- max(alignment(...))?
-stack_alloc($name, $T)
-    $["%" $name " = alloca " typestr($T) ", align " alignment($T)]S
-heap_alloc($name, $T)
+    $ $X $name
+        add_element_macros $name ...
+    $ $returntype $X :: $name (... ) @block
+        //TODO setup function definition stuff
+$ asm $$quote ...
+    $[ $$quote ]$
+    asm ...
+$ asm $name ...
+    $[ $ $name ... ]$
+$ stack_alloc($name, $T)
+    asm "%" $$name " = alloca "; asm typestr($T) ; asm ", align " ; asm alignment($T)
+$ heap_alloc($name, $T)
     stack_alloc($name, $T)
-    $["call malloc " sizeof($T)]
-    $["mov ax, %" $name]
-    $["%1" $0 " = call noalias i8* @malloc(i64 " sizeof($T) ") nounwind"]
-    $["%2" $0 " = bitcast i8* %1" $0 " to %struct." $type]
-    $["store %struct." $type " %2" $0 ", %struct." $type "* %" $name ", align 8"]
-    $["%3" $0 " = load %struct." $type "* %" $name ", align 8"]
+    $["call malloc "]$
+    sizeof($T)
+    $["mov ax, %" $$name]$
+    asm "%1" $$0 " = call noalias i8* @malloc(i64 " ; asm sizeof($T) ; asm ") nounwind"
+    $["%2" $$0 " = bitcast i8* %1" $$0 " to %struct." $$type]$
+    $["store %struct." $$type " %2" $$0 ", %struct." $$type "* %" $$name ", align 8"]$
+    $["%3" $$0 " = load %struct." $$type "* %" $$name ", align 8"]$
 
 //  %4 = call noalias i8* @malloc(i64 4) nounwind
 //  %5 = bitcast i8* %4 to i32*
 //  store i32* %5, i32** %y, align 8
 
-$result_type $fn(...) @block
+$ $result_type $fn(...) @block
     convert
     block must have return of type $result_type
-void $fn(...) @block
+$ void $fn(...) @block
     convert
     if block has return it must not be the return macro with a parenthetical argument
-auto $b(obj($type,$a))
+$ auto $b( obj($type,$a))
     $type($a) $b($a)
 
 struct W
@@ -81,17 +101,3 @@ struct W
     float y
     double d
 
-can be built in by macro expansions within the function macro
-e.g. a -> obj(type(a),name(a), ...)
-      so a function might have a signature like this:
-  fn(obj(int,$a))
-  which would be produced when the user entered a function like fn(int a)
-A a -> define macro "a -> obj(A,a)" & alloca stuct.A & add to destructor list
-A a() -> A a & call A constructor
-obj(A,b)
-operator #(A a, B b) -> obj(A,a) # obj(B,b) -> operator #(obj(A,a),obj(B,b)) & normal function stuff
-$# line #
-$? filename
-$0 arbitrary number within this macro
-$1 arbitrary number within this greater macro... need to clearly define
-$["mov " $blah ", ax"] - some assembly output
