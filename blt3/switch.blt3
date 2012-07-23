@@ -1,48 +1,47 @@
 // generic switch macro, no type specialization or optimizations (just convert into if/elses)
 
-$ switch($x)
-    
+$ switch $x
 
-$ switch($x) default @block
-    @block()
+$ switch $x default @block
+    @block
 
-$ switch($x) case($val) @block ...
-    if($x == $val)
-        @block()
+$ switch $x case $val @block ...
+    if $x == $val
+        @block
     else
-        switch($x) ...
+        switch $x ...
 
 // NOTE not quite the same as C's switch statement since you can't just continue into another case(), nor is there break
 
 // below is an attempt to design switch() for int's, optimizing when consecutive by putting them into a table
 
-$ switch($x, obj(int,$val_base)) case(obj(int,$val)) @block
-    // last jmp entry
-    $["lbl_" $1 "_" (obj(int,$val)-obj(int,$val_base)) ]
-    @block()
-    $["jmp end_" $1]
-    
-    // and build the jmp table (since we know how high it goes now)
-    $[".rodata"]
-    $["jmp_tbl_" $1]
-    for(i, range(obj(int,$val)-obj(int,$val_base)+1))
-        $[".quad lbl_" $1 "_" i]
-    $[".erodata"]
-
-// only all consectutive numbers will end up matching this switch pattern (because of the case(val+1) condition
-$ switch($x, obj(int,$val_base)) case(obj(int,$val)) @block case(obj(int,$val)+1) @block2 ...
-    // add a block entry for val
-    switch($x, obj(int,$val_base)) case(obj(int,$val)+1) @block2 ...
-    $["lbl_" $1 "_" (obj(int,$val)-obj(int,$val_base))]
-    @block()
-    $["jmp end_" $1]
-
-// wrapper for normal switch() usage, copy over value to base value
-$ switch($x) case(obj(int,$val_base)) @block ...
-    jmp_idx = $x-obj(int,$val_base)
-    $["jmp jmp_tbl_" $1 " + " jmp_idx]  // would mean jump to the code in the jmp table with offset jmp_idx (may need to change to something more conventional)
-    switch($x, obj(int,$val_base)) @block ...
-    $["end_" $1]
+// $ switch($x, obj(int,$val_base)) case(obj(int,$val)) @block
+//     // last jmp entry
+//     $["lbl_" $1 "_" (obj(int,$val)-obj(int,$val_base)) ]
+//     @block()
+//     $["jmp end_" $1]
+//     
+//     // and build the jmp table (since we know how high it goes now)
+//     $[".rodata"]
+//     $["jmp_tbl_" $1]
+//     for(i, range(obj(int,$val)-obj(int,$val_base)+1))
+//         $[".quad lbl_" $1 "_" i]
+//     $[".erodata"]
+// 
+// // only all consectutive numbers will end up matching this switch pattern (because of the case(val+1) condition
+// $ switch($x, obj(int,$val_base)) case(obj(int,$val)) @block case(obj(int,$val)+1) @block2 ...
+//     // add a block entry for val
+//     switch($x, obj(int,$val_base)) case(obj(int,$val)+1) @block2 ...
+//     $["lbl_" $1 "_" (obj(int,$val)-obj(int,$val_base))]
+//     @block()
+//     $["jmp end_" $1]
+// 
+// // wrapper for normal switch() usage, copy over value to base value
+// $ switch($x) case(obj(int,$val_base)) @block ...
+//     jmp_idx = $x-obj(int,$val_base)
+//     $["jmp jmp_tbl_" $1 " + " jmp_idx]  // would mean jump to the code in the jmp table with offset jmp_idx (may need to change to something more conventional)
+//     switch($x, obj(int,$val_base)) @block ...
+//     $["end_" $1]
 
 //        cmpl    $5, %edi
 //        ja      .L13

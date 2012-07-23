@@ -1,22 +1,22 @@
 // for use see while.blt3
 
-if(@condition_if) @block_if
-    @condition_if()
-    $["jz lbl_end_" $0]
-    @block_if()
-    $["lbl_end_" $0 ":"]
+$ if ...contition_if @block_if
+    ...condition_if
+    $["jz lbl_end_" $$0 "\n"]$
+    @block_if
+    $["lbl_end_" $$0 ":\n"]$
 
-if(@condition_if) @block_if else @block_else
-    @condition_if()
-    $["jz lbl_else_" $0]
-    @block_if()
-    $["jmp lbl_end_" $0]
-    $["lbl_else_" $0 ":"]
-    @block_else()
-    $["lbl_end_" $0 ":"]
+$ if ...condition_if @block_if else @block_else
+    ...condition_if
+    $["jz lbl_else_" $$0 "\n"]$
+    @block_if
+    $["jmp lbl_end_" $$0 "\n"]$
+    $["lbl_else_" $$0 ":\n"]$
+    @block_else
+    $["lbl_end_" $$0 ":\n"]$
 
-if(@condition_if) @block_if elif(@condition_elif) @block_elif ...
-    if(@condition_if) //TODO when should I include "()" and when is it not needed (maybe never allow it until its actually going to be evaluated)
+$ if ...condition_if @block_if elif ...condition_elif @block_elif ...elses
+    if ...condition_if
         @block_if
     else
-        if(@condition_elif) @block_elif ... // this is the new @block_else
+        if ...condition_elif @block_elif ...elses // this is the new @block_else

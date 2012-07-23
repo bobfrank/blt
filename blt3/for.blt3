@@ -1,9 +1,7 @@
-use()
-    for(a, A)
-        print(a)
-
-for($el, S) @block
-    while( !end(S) )
-        el = next(S)
-        @block($el = el, break=$["jmp for_end_" $0]) // would mean add the name used and represented by $el into the scope of @block with value el
-    $["for_end_" $0 ":"]
+$ for $el in $S @block
+    while( !end($S) )
+        @block
+            auto $el(next($S))
+            $ break
+                $["jmp for_end_" $$0]$
+    $["for_end_" $$0 ":"]$

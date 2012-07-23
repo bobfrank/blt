@@ -1,12 +1,16 @@
 // for use see for.blt3
 
-while(@condition) @block
-    if(@condition)
-        @block(break=$["jmp while_end_" $0])
-        while(@condition) @block // tail recursion should always optimize this into a loop (this is all going to be expanded in the macro)
-    $["while_end_" $0 ":"]
+$ while ...condition @block
+    if ...condition
+        @block
+            $ break
+                $[ "jmp while_end_" $$0 "\n" ]$
+        while ...condition @block // tail recursion should always optimize this into a loop (this is all going to be expanded in the macro)
+    $["while_end_" $$0 ":\n"]$
 
-do @block while(@condition)
-    @block(break=$["jmp while_end_" $0])
-    while(@condition) @block
-    $["while_end_" $0 ":"]
+$ do @block while ...condition
+    @block
+        $ break
+            $[ "jmp while_end_" $$0 "\n"]$
+    while ...condition @block
+    $["while_end_" $$0 ":\n"]$

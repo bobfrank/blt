@@ -22,7 +22,32 @@ block             : INDENT code DEDENT
 macroprefix_stmt  : macroprefix NEXT_STMT
                   ;
 
-macroprefix       : macroprefix macroelem
+macroprefix       : macroseq blk macroprefix
+                  | blk macroprefix
+                  | blk
+                  | macroseq blk
+                  | macroseq
+                  ;
+
+blk               : AT_ID
+                  | AT
+                  ;
+
+macroseq          : macroseq_bddd ddd macroseq_addd
+                  | macroseq_bddd
+                  | macroseq_bddd ddd
+                  | ddd
+                  ;
+
+ddd               : DOT_DOT_DOT
+                  | DOT_DOT_DOT_ID
+                  ;
+
+macroseq_addd     : macroseq_addd macroelem
+                  | macroelem
+                  ;
+
+macroseq_bddd     : macroseq_bddd macroelem
                   | macroelem_nd
                   ;
 
@@ -34,12 +59,8 @@ macroelem_nd      : ID
                   | OPERATOR
                   | DOLLAR_ID
                   | DD_ID
-                  | AT_ID
-                  | AT
                   | NUMBER
                   | STRING
-                  | DOT_DOT_DOT
-                  | DOT_DOT_DOT_ID
                   ;
 
 assembly          : BEGIN_ASSEMBLY assembly_code END_ASSEMBLY
