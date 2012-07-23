@@ -51,6 +51,9 @@ $ $ret_type operator $infix($TL $tl, $TR $tr) @block
 
 $ $ret_type $fn_name($T1 $t1, ...) @block
 
+need a way to compare and add numbers in macro language that is similar
+to how a user might set up an add/compare macro for such numbers after
+compliation (they probably should also be in charge of defining this macro)
 
 A a -> define macro "a -> obj(A,a)" & alloca stuct.A & add to destructor list
 A a() -> A a & call A constructor
