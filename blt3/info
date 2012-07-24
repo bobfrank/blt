@@ -55,15 +55,24 @@ need a way to compare and add numbers in macro language that is similar
 to how a user might set up an add/compare macro for such numbers after
 compliation (they probably should also be in charge of defining this macro)
 
+need a way to make say 'no overwritting this macro' in both the global sense
+and in the particular scope.
+
+need to come up with the best way to have errors.. I am still thinking along
+the lines of something like
+$ $fname(...)
+    ${"Unable to find function named" $$fnname}$
+but I need to make sure this will work out ok
+
 A a -> define macro "a -> obj(A,a)" & alloca stuct.A & add to destructor list
 A a() -> A a & call A constructor
 obj(A,b)
 operator #(A a, B b) -> obj(A,a) # obj(B,b) -> operator #(obj(A,a),obj(B,b)) & normal function stuff
-$# line #
-$? filename
+$# line # -- maybe
+$? filename -- maybe
 $0 arbitrary number within this macro
 $1 arbitrary number within this greater macro... need to clearly define
-$["mov " $blah ", ax"] - some assembly output
+$["mov " $blah ", ax"]$ - some assembly output
 *  any call to a @block results in a new scope level
 *  delay expanding macro arguments until the last minute
 *  maybe only allow expansion if the macro result is defined in one line (for the above point)
@@ -72,5 +81,6 @@ $["mov " $blah ", ax"] - some assembly output
 *  var     -> obj(name,"var")  -> obj(type("name"),"var")
 * macrodef = "$" macrocall
 * #!/usr/bin/blt_run -- compile source and run (so it can be used for short scripts easily)
-* error messages like ${"Error: The system is down (" $? ":" $# ")"}
- -- TODO need to figure out how type inference will be plugged into this language
+* error messages like ${"Error: The system is down (" $? ":" $# ")"} -- maybe
+type inference will be based on the objects returned.. as each object will be
+packed in something like obj(type("T"),"t")
