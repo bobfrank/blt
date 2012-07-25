@@ -6,10 +6,12 @@ code              : codetype code
 codetype          : macrodef
                   | macrocall
                   | assembly
+                  | error
                   | NEXT_STMT
                   ;
 
 macrodef          : DOLLAR macrocall
+                  | DOLLAR macrocall error
                   ;
 
 macrocall         : macroprefix_stmt block
@@ -61,6 +63,10 @@ macroelem_nd      : ID
                   | DD_ID
                   | NUMBER
                   | STRING
+                  ;
+
+error             : BEGIN_ERROR assembly_code END_ERROR
+                  | BEGIN_ERROR DOLLAR macroprefix END_ERROR
                   ;
 
 assembly          : BEGIN_ASSEMBLY assembly_code END_ASSEMBLY

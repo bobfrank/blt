@@ -8,6 +8,8 @@ tokens = (
         'ID',
         'BEGIN_ASSEMBLY',
         'END_ASSEMBLY',
+        'BEGIN_ERROR',
+        'END_ERROR',
         'SET_INDENT',
         'DOLLAR',
         'CONTINUATION',
@@ -29,6 +31,8 @@ EID             = r'[a-zA-Z0-9_]'
 t_ID            = r'[a-zA-Z_]%s*'%EID
 t_BEGIN_ASSEMBLY= r'\$\['
 t_END_ASSEMBLY  = r'\]\$'
+t_BEGIN_ERROR   = r'\${'
+t_END_ERROR     = r'}\$'
 t_AT_ID         = r'@%s+'%EID
 t_DD_ID         = r'\$\$%s+'%EID
 t_DOLLAR_ID     = r'\$%s+'%EID
@@ -122,6 +126,15 @@ class MyLexer:
                         yield new_tok
                     else:
                         yield new_tok
+                elif tok.type == 'OPERATOR' and tok.value == '}':
+                    future_tok = self.peek_otoken()
+                    if future_tok.type == 'DOLLAR':
+                        self.otoken()
+                        new_tok.type  = 'END_ERROR'
+                        new_tok.value = '}$'
+                        yield new_tok
+                    else:
+                        yield new_tok
                 elif tok.type == 'OPERATOR' and tok.value == '...':
                     future_tok = self.peek_otoken()
                     #print('tok',tok,',ftok',future_tok)
@@ -159,28 +172,36 @@ def p_code_2(t):
         t[0] = [t[1]]
     else:
         t[0] = []
-def p_codetype(t):
+def p_codetype_1(t):
     '''
     codetype : macrodef
              | macrocall
              | assembly
+             | uerror
              | NEXT_STMT'''
     t[0] = t[1]
 def p_macrodef(t):
     'macrodef : DOLLAR macrocall'
-    t[0] = {'_macro_def': t[2]['_macro_call'], 'block': t[2].get('block')}
+    t[0] = {'_macro_def': t[2]['_macro_call'], 'block': t[2].get('block'), 'ifexists': t[2].get('ifnotexists')}
 def p_macrocall_1(t):
     'macrocall : macroprefix_stmt block'
-    t[0] = {'_macro_call': t[1], 'block': t[2]}
+    t[0] = {'_macro_call': t[1]['prefix'], 'block': t[2]}
+    if 'error' in t[1]:
+        t[0]['ifnotexists'] = t[1]['error']
 def p_macrocall_2(t):
     'macrocall : macroprefix_stmt'
-    t[0] = {'_macro_call': t[1]}
+    t[0] = {'_macro_call': t[1]['prefix']}
+    if 'error' in t[1]:
+        t[0]['ifnotexists'] = t[1]['error']
 def p_block(t):
     'block : INDENT code DEDENT'
     t[0] = t[2]
-def p_macroprefix_stmt(t):
+def p_macroprefix_stmt_1(t):
     'macroprefix_stmt : macroprefix NEXT_STMT'
-    t[0] = t[1]
+    t[0] = {'prefix': t[1]}
+def p_macroprefix_stmt_2(t):
+    'macroprefix_stmt : macroprefix uerror NEXT_STMT'
+    t[0] = {'prefix': t[1], 'error': t[2]}
 def p_macroprefix_1(t):
     '''
     macroprefix : macroseq blk macroprefix'''
@@ -272,6 +293,12 @@ def p_assembly_1(t):
 def p_assembly_2(t):
     'assembly : BEGIN_ASSEMBLY DOLLAR macroprefix END_ASSEMBLY'
     t[0] = {'assembly': {'macro_call': t[3]}}
+def p_uerror_1(t):
+    'uerror : BEGIN_ERROR assembly_code END_ERROR'
+    t[0] = {'error': t[2]}
+def p_uerror_2(t):
+    'uerror : BEGIN_ERROR DOLLAR macroprefix END_ERROR'
+    t[0] = {'error': {'macro_call': t[3]}}
 def p_asm_1(t):
     'assembly_code : assembly_code assembly_codetype'
     out = t[1]

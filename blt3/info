@@ -84,3 +84,31 @@ $["mov " $blah ", ax"]$ - some assembly output
 * error messages like ${"Error: The system is down (" $? ":" $# ")"} -- maybe
 type inference will be based on the objects returned.. as each object will be
 packed in something like obj(type("T"),"t")
+
+$ reverse $X
+ $X
+$ reverse $X ...
+ $reverse ... $X
+$ sum $ $X ...X and $ $Y ...Y
+  TODO
+$ $$X + $$Y
+  sum reverse $$X and reverse $$Y
+$ in the middle splits apart a constant into its parts
+$ name = $value
+ auto $name($value)
+$ $type $name($value)
+ ${"No such type as "$$type}$
+$ struct $ptype ...
+ $ ptype $name($value)
+   $ $name
+     ${"variable of name "$$name" already exists"}$
+
+// three types of errors allowed
+$ this exists ${"Error this already exists"}$
+    "good to go, this is the first definition in this scope"
+
+$ error on call
+    ${"You shouldnt call this special macro"}$
+
+$ error if not exists $maybe
+    call something existing $maybe ${"Uh oh.. it doesnt actually exist"}$
