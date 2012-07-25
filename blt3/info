@@ -4,9 +4,14 @@ symbols
 @ -- chunk of code to execute (only for macros)
 $[] -- assembly (probably similar to LLVM with some extra stuff)
 
-$0 in a macro would represent a unique value common to that particular instantiation of the macro (as in just one case in a switch/case series)
-$1 would represent a unique value common to the whole macro expansion (as in all items in an if/else series or switch/case series)
-$name wolud represent a variable name to be used for scoping in the event that it is desired in a macro (see for loop for an example)
+$0 in a macro would represent a unique value common to that
+  particular instantiation of the macro (as in just one case
+  in a switch/case series)
+$1 would represent a unique value common to the whole macro
+  expansion (as in all items in an if/else series or switch/case series)
+$name wolud represent a variable name to be used for scoping
+  in the event that it is desired in a macro (see for loop
+  for an example)
 
 Everything is either a macro definition or a macro call.
 
@@ -51,18 +56,23 @@ $ $ret_type operator $infix($TL $tl, $TR $tr) @block
 
 $ $ret_type $fn_name($T1 $t1, ...) @block
 
-need a way to compare and add numbers in macro language that is similar
+Need a way to compare and add numbers in macro language that is similar
 to how a user might set up an add/compare macro for such numbers after
 compliation (they probably should also be in charge of defining this macro)
+Current idea --
+$ reverse $X
+ $X
+$ reverse $X ...
+ $reverse ... $X
+$ sum $ $X ...X and $ $Y ...Y
+  TODO
+$ $$X + $$Y
+  sum reverse $$X and reverse $$Y
+$ in the middle splits apart a constant into its parts
 
-need a way to make say 'no overwritting this macro' in both the global sense
-and in the particular scope.
-
-need to come up with the best way to have errors.. I am still thinking along
-the lines of something like
-$ $fname(...)
-    ${"Unable to find function named" $$fnname}$
-but I need to make sure this will work out ok
+Now have a way of saying 'error if this isnt a new macro in this scope',
+maybe I should have something like 'no overwritting this macro' in both
+the global and particular scope sense.
 
 A a -> define macro "a -> obj(A,a)" & alloca stuct.A & add to destructor list
 A a() -> A a & call A constructor
@@ -81,19 +91,9 @@ $["mov " $blah ", ax"]$ - some assembly output
 *  var     -> obj(name,"var")  -> obj(type("name"),"var")
 * macrodef = "$" macrocall
 * #!/usr/bin/blt_run -- compile source and run (so it can be used for short scripts easily)
-* error messages like ${"Error: The system is down (" $? ":" $# ")"} -- maybe
 type inference will be based on the objects returned.. as each object will be
 packed in something like obj(type("T"),"t")
 
-$ reverse $X
- $X
-$ reverse $X ...
- $reverse ... $X
-$ sum $ $X ...X and $ $Y ...Y
-  TODO
-$ $$X + $$Y
-  sum reverse $$X and reverse $$Y
-$ in the middle splits apart a constant into its parts
 $ name = $value
  auto $name($value)
 $ $type $name($value)
@@ -112,3 +112,12 @@ $ error on call
 
 $ error if not exists $maybe
     call something existing $maybe ${"Uh oh.. it doesnt actually exist"}$
+
+
+--- most important remaining issue ---
+
+Need to think of a good way to determine what macros a macrocall
+contains. That is to say if I have something like:
+ callfn(fn2(),fn3()) it would be obvious what it means if there
+was something special about parentheses. But since there isn't
+its a bit more complicated for blt.
